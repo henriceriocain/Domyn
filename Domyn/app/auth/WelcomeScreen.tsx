@@ -9,7 +9,7 @@ export default function WelcomeScreen() {
     <View style={styles.container}>
       <Text style={styles.header}>Domyn</Text>
       <Text style={styles.subheader}>Welcome To Your Fitness Domain</Text>
-      <TouchableOpacity style={styles.button} onPress={() => router.push("/auth/PersonalDetails")}>
+      <TouchableOpacity style={styles.button} onPress={() => router.push("/auth/PersonalDetailsScreen")}>
         <Text style={styles.buttonText}>Get Started</Text>
       </TouchableOpacity>
     </View>
