@@ -36,7 +36,7 @@ export default function PersonalDetailsScreen() {
 
   // Handler for the Next button
   const handleNextPress = () => {
-    router.push("/auth/WorkoutDetailsScreen");
+    router.push("./WorkoutDetailsScreen");
   };
 
   return (
@@ -44,7 +44,7 @@ export default function PersonalDetailsScreen() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"} 
-      keyboardVerticalOffset={10} 
+      keyboardVerticalOffset={5} 
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -52,10 +52,10 @@ export default function PersonalDetailsScreen() {
 
           <View style={styles.form}>
             {/* Name */}
-            <Text style={styles.subheadings}>Name</Text>
+            <Text style={styles.subheadings}>First Name</Text>
             <TextInput
               style={styles.userInput}
-              placeholder="What's your name?"
+              placeholder="What's your first name?"
               placeholderTextColor="gray"
               value={name}
               onChangeText={setName} // Update context state
@@ -105,6 +105,19 @@ export default function PersonalDetailsScreen() {
           >
             <Text style={styles.buttonText}>Next</Text>
           </TouchableOpacity>
+          
+          {/* Back Button */}
+          <TouchableOpacity
+            style={[
+              styles.button,
+              { backgroundColor: allFieldsFilled ? "white" : "gray" }, // Button color based on input completion
+            ]}
+            disabled={!allFieldsFilled} // Disable button if fields are empty
+            onPress={handleNextPress}
+          >
+            <Text style={styles.buttonText}>Next</Text>
+          </TouchableOpacity>
+
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -119,23 +132,21 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: "center", // Consider removing if causing issues with keyboard
-    padding: 20, // Optional: Adjust padding as needed
   },
   header: {
     fontSize: 40,
     color: "white",
     fontWeight: "700",
     padding: 30,
-    textAlign: "center", // Centers the header text
+    paddingTop: 70,
   },
   form: {
     padding: 20,
     paddingLeft: 40,
   },
   subheadings: {
-    fontSize: 20,
-    fontWeight: "500",
+    fontSize: 18,
+    fontWeight: "600",
     color: "white",
     marginTop: 15, // Added margin for spacing
     marginBottom: 5, // Added margin for spacing
@@ -146,7 +157,7 @@ const styles = StyleSheet.create({
     width: "65%",
     fontSize: 16,
     color: "white",
-    marginBottom: 30,
+    marginBottom: 20,
     paddingVertical: 10,
   },
   userInput2: {
@@ -155,7 +166,7 @@ const styles = StyleSheet.create({
     width: "40%",
     fontSize: 16,
     color: "white",
-    marginBottom: 30,
+    marginBottom: 20,
     paddingVertical: 10,
   },
   userInput3: {
@@ -164,7 +175,7 @@ const styles = StyleSheet.create({
     width: "50%",
     fontSize: 16,
     color: "white",
-    marginBottom: 30,
+    marginBottom: 20,
     paddingVertical: 10,
   },
   userInput4: {
@@ -173,7 +184,7 @@ const styles = StyleSheet.create({
     width: "60%",
     fontSize: 16,
     color: "white",
-    marginBottom: 130,
+    marginBottom: 150,
     paddingVertical: 10,
   },
   button: {
@@ -182,6 +193,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
     width: "30%",
     marginRight: 30,
+    marginBottom: 100,
   },
   buttonText: {
     color: "black",

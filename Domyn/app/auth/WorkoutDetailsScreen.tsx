@@ -1,52 +1,42 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
-  Keyboard,
-  TouchableWithoutFeedback,
-} from "react-native";
+// app/auth/WorkoutDetailsScreen.tsx
+
+// Import statements
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import React, { useContext } from 'react';
-// importing file that stores user data
-import { UserContext } from '../../contexts/UserContext';
+import { useUserContext } from '../../hooks/useUserContext'; 
 
-export default function PersonalDetailsScreen() {
+// File function
+export default function WorkoutDetailsScreen() {
 
-  // router const to route buttons to new files
+  // router const to route to other pages
   const router = useRouter();
-  // userContext const to use user data
-  const userContext = useContext(UserContext);
-  const { name } = userContext; // Extract the name from context
-
-  // Days of the week
-  const [monday, setMonday] = useState(false);
-  const [tuesday, setTuesday] = useState(false);
-  const [wednesday, setWednesday] = useState(false);
-  const [thursday, setThursday] = useState(false);
-  const [friday, setFriday] = useState(false);
-  const [saturday, setSaturday] = useState(false);
-  const [sunday, setSunday] = useState(false);
+  // useUserContext used to get name
+  const { name } = useUserContext();
 
   return (
-
     <View style={styles.container}>
-      <Text style={styles.header}>Welcome, {name}</Text>
+      <Text style={styles.header}>
+        Welcome, <Text style={styles.name}>{name}</Text>!
+      </Text>    
     </View>
   );
-
 }
 
 const styles = StyleSheet.create({
- 
   container: {
+    flex: 1,
     backgroundColor: "black",
-
+    padding: 20,
+  },
+  header: {
+    fontSize: 40,
+    fontWeight: 700,
+    color: "white",
+    paddingTop: 60,
+  },
+  name: {
+    fontWeight: 800,
+    color: "white",
   }
-  
 });

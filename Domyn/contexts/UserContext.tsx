@@ -1,6 +1,6 @@
 // app/contexts/UserContext.tsx
 
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define the shape of the user data
@@ -68,7 +68,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     saveUserData();
   }, [name, age, gender, weight]);
 
-  // Optional: Function to reset user data
+  // Function to reset user data
   const resetUser = async () => {
     try {
       setName("");
@@ -85,8 +85,21 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   };
 
+  // Memoize the context value to optimize performance
+  const value = useMemo(() => ({
+    name,
+    setName,
+    age,
+    setAge,
+    gender,
+    setGender,
+    weight,
+    setWeight,
+    resetUser,
+  }), [name, age, gender, weight]);
+
   return (
-    <UserContext.Provider value={{ name, setName, age, setAge, gender, setGender, weight, setWeight, resetUser }}>
+    <UserContext.Provider value={value}>
       {children}
     </UserContext.Provider>
   );
