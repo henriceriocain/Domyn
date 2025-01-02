@@ -1,17 +1,20 @@
-import { Slot } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import React from 'react';
+import { UserProvider } from '../contexts/UserContext'; // Adjust the path if necessary
+import { Slot } from 'expo-router';
+import { StyleSheet } from 'react-native'; // Added import
 
-export default function RootLayout() {
+const Layout = () => {
   return (
-    <View style={styles.container}>
+    <UserProvider>
       <Slot />
-    </View>
+    </UserProvider>
   );
-}
+};
+
+export default Layout;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
 });
-
