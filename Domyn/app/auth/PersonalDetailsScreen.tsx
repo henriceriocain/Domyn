@@ -18,9 +18,9 @@ import { UserContext } from '../../contexts/UserContext'; // Adjust the path as 
 // File function
 export default function PersonalDetailsScreen() {
 
-  // router const to route buttons to other files
+  // Router const to route buttons to other files
   const router = useRouter();
-  //  userContect const to store and utilise user data
+  // UserContext const to store and utilize user data
   const userContext = useContext(UserContext); 
 
   // Case where the context is not available
@@ -28,7 +28,7 @@ export default function PersonalDetailsScreen() {
     return null;
   }
 
-  // Initilizing userContext
+  // Initializing userContext
   const { name, setName, age, setAge, gender, setGender, weight, setWeight } = userContext;
 
   // Variable to check all fields are filled
@@ -36,7 +36,12 @@ export default function PersonalDetailsScreen() {
 
   // Handler for the Next button
   const handleNextPress = () => {
-    router.push("./WorkoutDetailsScreen");
+    router.push("./WorkoutDaysScreen");
+  };
+
+  // Handler for the Back button
+  const handleBackPress = () => {
+    router.push("./WelcomeScreen");
   };
 
   return (
@@ -51,7 +56,7 @@ export default function PersonalDetailsScreen() {
           <Text style={styles.header}>Let's Get To Know Each Other...</Text>
 
           <View style={styles.form}>
-            {/* Name */}
+            {/* First Name */}
             <Text style={styles.subheadings}>First Name</Text>
             <TextInput
               style={styles.userInput}
@@ -94,30 +99,30 @@ export default function PersonalDetailsScreen() {
             />
           </View>
 
-          {/* Submit Button */}
-          <TouchableOpacity
-            style={[
-              styles.button,
-              { backgroundColor: allFieldsFilled ? "white" : "gray" }, // Button color based on input completion
-            ]}
-            disabled={!allFieldsFilled} // Disable button if fields are empty
-            onPress={handleNextPress}
-          >
-            <Text style={styles.buttonText}>Next</Text>
-          </TouchableOpacity>
-          
-          {/* Back Button */}
-          <TouchableOpacity
-            style={[
-              styles.button,
-              { backgroundColor: allFieldsFilled ? "white" : "gray" }, // Button color based on input completion
-            ]}
-            disabled={!allFieldsFilled} // Disable button if fields are empty
-            onPress={handleNextPress}
-          >
-            <Text style={styles.buttonText}>Next</Text>
-          </TouchableOpacity>
+          {/* Button Container */}
+          <View style={styles.buttonContainer}>
+            {/* Back Button */}
+            <TouchableOpacity
+              style={[
+                styles.button,
+              ]}
+              onPress={handleBackPress}
+            >
+              <Text style={styles.backButtonText}>Back</Text>
+            </TouchableOpacity>
 
+            {/* Next Button */}
+            <TouchableOpacity
+              style={[
+                styles.button,
+                { backgroundColor: allFieldsFilled ? "white" : "gray" }, // Button color based on input completion
+              ]}
+              disabled={!allFieldsFilled} // Disable button if fields are empty
+              onPress={handleNextPress}
+            >
+              <Text style={styles.nextButtonText}>Next</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -148,8 +153,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "white",
-    marginTop: 15, // Added margin for spacing
+    marginTop: 5, // Added margin for spacing
     marginBottom: 5, // Added margin for spacing
+    marginLeft: -10,
   },
   userInput: {
     borderBottomWidth: 1,
@@ -184,21 +190,30 @@ const styles = StyleSheet.create({
     width: "60%",
     fontSize: 16,
     color: "white",
-    marginBottom: 150,
+    marginBottom: 130,
     paddingVertical: 10,
+  },
+  buttonContainer: {
+    flexDirection: "row",            // Arrange buttons horizontally
+    justifyContent: "space-between",  // Space between buttons
+    paddingHorizontal: 30,           // Horizontal padding for the container
+    marginBottom: 100,
   },
   button: {
     borderRadius: 30,
     paddingVertical: 15,
-    alignSelf: "flex-end",
-    width: "30%",
-    marginRight: 30,
-    marginBottom: 100,
+    width: "30%",                     // Adjust width to fit side by side
+    alignItems: "center",            // Center text horizontally
   },
-  buttonText: {
+  nextButtonText: {
     color: "black",
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
   },
+  backButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+  }
 });
