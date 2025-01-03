@@ -14,7 +14,7 @@ export default function WorkoutDetailsScreen() {
   // useUserContext used to get name
   const { name } = useUserContext();
 
-  
+
 
 
   // Handlers for navigation buttons
@@ -25,7 +25,7 @@ export default function WorkoutDetailsScreen() {
     router.push("./PersonalDetailsScreen");
   };
 
-
+ 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>
