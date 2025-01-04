@@ -94,9 +94,32 @@ export default function CustomizeWorkout() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'black', padding: 20 },
-  header: { fontSize: 32, fontWeight: 'bold', color: 'white', marginBottom: 20 },
-  input: { backgroundColor: '#1a1a1a', color: 'white', padding: 10, borderRadius: 5, marginBottom: 10 },
-  exerciseItem: { backgroundColor: '#333', padding: 10, borderRadius: 5, marginBottom: 10 },
-  exerciseText: { color: 'white' },
+  container: { 
+    flex: 1, 
+    backgroundColor: 'black',
+    padding: 20 
+  },
+  header: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: 'white',
+    paddingTop: 60,
+    paddingBottom: 60,
+  },
+  input: { 
+    backgroundColor: '#1a1a1a', 
+    color: 'white', 
+    padding: 10, 
+    borderRadius: 5, 
+    marginBottom: 10 
+  },
+  exerciseItem: { 
+    backgroundColor: '#333', 
+    padding: 10, 
+    borderRadius: 5, 
+    marginBottom: 10 
+  },
+  exerciseText: { 
+    color: 'white' 
+  },
 });
