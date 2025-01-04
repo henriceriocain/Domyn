@@ -101,15 +101,6 @@ export default function PersonalDetailsScreen() {
 
           {/* Button Container */}
           <View style={styles.buttonContainer}>
-            {/* Back Button */}
-            <TouchableOpacity
-              style={[
-                styles.button,
-              ]}
-              onPress={handleBackPress}
-            >
-              <Text style={styles.backButtonText}>Back</Text>
-            </TouchableOpacity>
 
             {/* Next Button */}
             <TouchableOpacity
@@ -195,8 +186,8 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",            // Arrange buttons horizontally
-    justifyContent: "space-between",  // Space between buttons
     paddingHorizontal: 30,           // Horizontal padding for the container
+    justifyContent: "flex-end",
     marginBottom: 100,
   },
   button: {
@@ -204,6 +195,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     width: "30%",                     // Adjust width to fit side by side
     alignItems: "center",            // Center text horizontally
+    alignSelf: 'flex-end', // Add this line 
   },
   nextButtonText: {
     color: "black",
