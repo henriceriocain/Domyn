@@ -91,23 +91,25 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 16,
     color: "white",
-    marginBottom: 20,
+    marginTop: 40,
+    marginBottom: 40,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     color: "white",
-    marginBottom: 20,
+    marginBottom: 40,
   },
   subtitle: {
     fontSize: 18,
     color: "white",
-    marginBottom: 10,
+    marginBottom: 20,
   },
   daysContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    marginTop: 20,
+    marginBottom: 30,
   },
   dayButton: {
     backgroundColor: "grey",
@@ -130,6 +132,7 @@ const styles = StyleSheet.create({
   },
   exerciseContainer: {
     marginTop: 20,
+    marginBottom: 20,
   },
   exerciseButton: {
     backgroundColor: "#1C1C1E",

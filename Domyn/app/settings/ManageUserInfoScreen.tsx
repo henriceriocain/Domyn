@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
         color: "white",
         fontSize: 16,
         borderRadius: 10,
-        padding: 10,
+        padding: 15,
     },
     footer: {
         textAlign: "center",
