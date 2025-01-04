@@ -72,10 +72,6 @@ export default function WorkoutDaysScreen() {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={handleBack}>
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity
           style={[
             styles.button,
@@ -138,7 +134,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     paddingHorizontal: 10,
     marginTop: 290,
     marginBottom: 100,
@@ -148,16 +144,12 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     width: "30%",
     alignItems: "center",
+    alignSelf: 'flex-end',
   },
   nextButtonText: {
     color: "black",
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
-  },
-  backButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
   },
 });

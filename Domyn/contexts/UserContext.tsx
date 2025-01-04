@@ -36,8 +36,9 @@ export interface UserContextProps {
   workouts: { [day: string]: Workout };
   addWorkout: (day: string) => void;
   getWorkout: (day: string) => Workout | undefined;
-  selectedDays: string[]; // Added to track selected days
-  setSelectedDays: (days: string[]) => void; // Setter for selected days
+  updateWorkout: (day: string, workout: Workout) => void;  // Added this line
+  selectedDays: string[];
+  setSelectedDays: (days: string[]) => void;
 }
 
 export const UserContext = createContext<UserContextProps | undefined>(undefined);
@@ -47,8 +48,7 @@ interface UserProviderProps {
 }
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-
-  // Personal details state, this defines the initial state of these variables
+  // Personal details state
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
@@ -60,7 +60,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   // Selected days state
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
 
-  // Load user data from AsyncStorage, this grabs the data within AsyncStorage when the app is opened
+  // Load user data from AsyncStorage
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -75,7 +75,19 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         if (storedAge) setAge(storedAge);
         if (storedGender) setGender(storedGender);
         if (storedWeight) setWeight(storedWeight);
-        if (storedWorkouts) setWorkouts(JSON.parse(storedWorkouts));
+        if (storedWorkouts) {
+          // Parse the workouts and reconstruct Workout instances
+          const parsedWorkouts = JSON.parse(storedWorkouts);
+          const reconstructedWorkouts: { [day: string]: Workout } = {};
+          
+          Object.entries(parsedWorkouts).forEach(([day, workoutData]: [string, any]) => {
+            const workout = new Workout(day);
+            workout.exercise = workoutData.exercise;
+            reconstructedWorkouts[day] = workout;
+          });
+          
+          setWorkouts(reconstructedWorkouts);
+        }
         if (storedSelectedDays) setSelectedDays(JSON.parse(storedSelectedDays));
       } catch (error) {
         console.error('Error loading data from AsyncStorage:', error);
@@ -137,6 +149,14 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   // Get a workout
   const getWorkout = (day: string): Workout | undefined => workouts[day];
 
+  // Update a workout
+  const updateWorkout = (day: string, workout: Workout) => {
+    setWorkouts(prev => ({
+      ...prev,
+      [day]: workout
+    }));
+  };
+
   const value = useMemo(
     () => ({
       name,
@@ -151,6 +171,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       workouts,
       addWorkout,
       getWorkout,
+      updateWorkout,  // Added this line
       selectedDays,
       setSelectedDays,
     }),
