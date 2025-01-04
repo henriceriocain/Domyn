@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
 
-// This intitialises the 'Days' object, thats a Typscript type. Types defines the parameter of a datastructures
+// This initializes the 'Days' object, that's a TypeScript type. Types define the structure of a data object.
 type Days = {
   Mon: boolean;
   Tues: boolean;
@@ -15,14 +15,12 @@ type Days = {
 };
 
 export default function WorkoutDaysScreen() {
-
   const router = useRouter();
 
-  // This destructures the name, and addWorkout properties of UserContext
-  // useUserContext is a React hook that allows us to use UserContext, its values and its methods
-  // Whats a hook? 
-  //    A special function that makes remembering data easier.
-  const { name, addWorkout } = useUserContext();
+  // This destructures the name, setSelectedDays, and addWorkout properties of UserContext
+  // useUserContext is a React hook that allows us to use UserContext, its values, and its methods
+  const { name, setSelectedDays, addWorkout } = useUserContext();
+
   // This sets all Days to be by default false. Consts are constant variables where values cannot be changed.
   const [days, setDays] = useState<Days>({
     Mon: false,
@@ -33,25 +31,25 @@ export default function WorkoutDaysScreen() {
     Sat: false,
     Sun: false,
   });
+
   // Defines a const function, input is a day of a Days object
   const handleDayPress = (day: keyof Days) => {
     setDays((prevDays) => ({ ...prevDays, [day]: !prevDays[day] }));
   };
 
-  const handleContinue = () => {
+  // Save selected days to UserContext and navigate to the next screen
+  const handleNext = () => {
     const selectedDays = Object.keys(days).filter((day) => days[day as keyof Days]);
     if (selectedDays.length > 0) {
-      selectedDays.forEach((day) => addWorkout(day as keyof Days));
-      router.push({
-        pathname: './WorkoutDetailsScreen',
-        params: { selectedDays },
-      });
+      setSelectedDays(selectedDays); // Save to UserContext
+      selectedDays.forEach((day) => addWorkout(day as keyof Days)); // Optionally add workouts
+      router.push('./WorkoutRoutineScreen'); // Navigate to the next screen
     } else {
       alert('Please select at least one day.');
     }
   };
 
-  const handleBackPress = () => {
+  const handleBack = () => {
     router.push('./PersonalDetailsScreen');
   };
 
@@ -74,7 +72,7 @@ export default function WorkoutDaysScreen() {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={handleBackPress}>
+        <TouchableOpacity style={styles.button} onPress={handleBack}>
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
 
@@ -83,7 +81,7 @@ export default function WorkoutDaysScreen() {
             styles.button,
             { backgroundColor: Object.values(days).some((val) => val) ? 'white' : 'gray' },
           ]}
-          onPress={handleContinue}
+          onPress={handleNext}
           disabled={!Object.values(days).some((val) => val)}
         >
           <Text style={styles.nextButtonText}>Next</Text>
@@ -139,17 +137,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   buttonContainer: {
-    flexDirection: "row",           
-    justifyContent: "space-between",  
-    paddingHorizontal: 10,           
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
     marginTop: 290,
     marginBottom: 100,
   },
   button: {
     borderRadius: 30,
     paddingVertical: 15,
-    width: "30%",                    
-    alignItems: "center",            
+    width: "30%",
+    alignItems: "center",
   },
   nextButtonText: {
     color: "black",
@@ -161,6 +159,5 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
-  }
-
+  },
 });

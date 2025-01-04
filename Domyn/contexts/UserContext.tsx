@@ -36,6 +36,8 @@ export interface UserContextProps {
   workouts: { [day: string]: Workout };
   addWorkout: (day: string) => void;
   getWorkout: (day: string) => Workout | undefined;
+  selectedDays: string[]; // Added to track selected days
+  setSelectedDays: (days: string[]) => void; // Setter for selected days
 }
 
 export const UserContext = createContext<UserContextProps | undefined>(undefined);
@@ -51,10 +53,14 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
   const [weight, setWeight] = useState('');
+  
   // Workouts state
   const [workouts, setWorkouts] = useState<{ [day: string]: Workout }>({});
 
-  // Load user data from AsyncStorage, this grabs the data within Asynctorage when the app is opened
+  // Selected days state
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+
+  // Load user data from AsyncStorage, this grabs the data within AsyncStorage when the app is opened
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -63,14 +69,16 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         const storedGender = await AsyncStorage.getItem('@user_gender');
         const storedWeight = await AsyncStorage.getItem('@user_weight');
         const storedWorkouts = await AsyncStorage.getItem('@workouts');
+        const storedSelectedDays = await AsyncStorage.getItem('@selected_days');
 
         if (storedName) setName(storedName);
         if (storedAge) setAge(storedAge);
         if (storedGender) setGender(storedGender);
         if (storedWeight) setWeight(storedWeight);
         if (storedWorkouts) setWorkouts(JSON.parse(storedWorkouts));
+        if (storedSelectedDays) setSelectedDays(JSON.parse(storedSelectedDays));
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading data from AsyncStorage:', error);
       }
     };
     loadUserData();
@@ -85,12 +93,13 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         await AsyncStorage.setItem('@user_gender', gender);
         await AsyncStorage.setItem('@user_weight', weight);
         await AsyncStorage.setItem('@workouts', JSON.stringify(workouts));
+        await AsyncStorage.setItem('@selected_days', JSON.stringify(selectedDays));
       } catch (error) {
-        console.error('Error saving data:', error);
+        console.error('Error saving data to AsyncStorage:', error);
       }
     };
     saveUserData();
-  }, [name, age, gender, weight, workouts]);
+  }, [name, age, gender, weight, workouts, selectedDays]);
 
   // Reset user data
   const resetUser = async () => {
@@ -100,7 +109,15 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       setGender('');
       setWeight('');
       setWorkouts({});
-      await AsyncStorage.multiRemove(['@user_name', '@user_age', '@user_gender', '@user_weight', '@workouts']);
+      setSelectedDays([]);
+      await AsyncStorage.multiRemove([
+        '@user_name',
+        '@user_age',
+        '@user_gender',
+        '@user_weight',
+        '@workouts',
+        '@selected_days',
+      ]);
     } catch (error) {
       console.error('Error resetting user data:', error);
     }
@@ -108,10 +125,13 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   // Add a workout
   const addWorkout = (day: string) => {
-    setWorkouts((prev) => ({
-      ...prev,
-      [day]: new Workout(day),
-    }));
+    setWorkouts((prev) => {
+      if (prev[day]) {
+        console.warn(`Workout for ${day} already exists.`);
+        return prev;
+      }
+      return { ...prev, [day]: new Workout(day) };
+    });
   };
 
   // Get a workout
@@ -131,10 +151,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       workouts,
       addWorkout,
       getWorkout,
+      selectedDays,
+      setSelectedDays,
     }),
-    [name, age, gender, weight, workouts]
+    [name, age, gender, weight, workouts, selectedDays]
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
-  
 };
