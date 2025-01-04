@@ -1,9 +1,28 @@
-// app/contexts/UserContext.tsx
+// What does this file do?
+//    This file stores global data within our app.
+
+// How does this file store user data?
+//    With a tool called 'React Context'. This gives our data a place to store data, and allows components to use it.
+
+// React Context
+    // Whats UserContext?
+    //    This is the container that stores all the data of the user. this includes their name, DoB, and workout plan.
+
+    // Whats UserProvider?
+    //    This is the wrapper around the app that makes UserContext usable for any component within our app. This decides what component has what data.
+
+// Global State Management
+
+    // States:
+    //    The current contents of a class of data.
+
+// AsyncStorage
+//    A small database within phones to store data
 
 import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Workout from '../models/Workout';
 
-// Define the shape of the user data
 export interface UserContextProps {
   name: string;
   setName: (name: string) => void;
@@ -13,25 +32,29 @@ export interface UserContextProps {
   setGender: (gender: string) => void;
   weight: string;
   setWeight: (weight: string) => void;
-  resetUser: () => void; // Optional: For resetting user data
+  resetUser: () => void;
+  workouts: { [day: string]: Workout };
+  addWorkout: (day: string) => void;
+  getWorkout: (day: string) => Workout | undefined;
 }
 
-// Create the context with default values
 export const UserContext = createContext<UserContextProps | undefined>(undefined);
 
-// Define the props for the provider
 interface UserProviderProps {
   children: ReactNode;
 }
 
-// Create the provider component
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  const [name, setName] = useState("");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState("");
-  const [weight, setWeight] = useState("");
 
-  // Load data from AsyncStorage when the provider mounts
+  // Personal details state, this defines the initial state of these variables
+  const [name, setName] = useState('');
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState('');
+  const [weight, setWeight] = useState('');
+  // Workouts state
+  const [workouts, setWorkouts] = useState<{ [day: string]: Workout }>({});
+
+  // Load user data from AsyncStorage, this grabs the data within Asynctorage when the app is opened
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -39,20 +62,21 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         const storedAge = await AsyncStorage.getItem('@user_age');
         const storedGender = await AsyncStorage.getItem('@user_gender');
         const storedWeight = await AsyncStorage.getItem('@user_weight');
+        const storedWorkouts = await AsyncStorage.getItem('@workouts');
 
         if (storedName) setName(storedName);
         if (storedAge) setAge(storedAge);
         if (storedGender) setGender(storedGender);
         if (storedWeight) setWeight(storedWeight);
+        if (storedWorkouts) setWorkouts(JSON.parse(storedWorkouts));
       } catch (error) {
-        console.log('Error loading user data:', error);
+        console.error('Error loading data:', error);
       }
     };
-
     loadUserData();
   }, []);
 
-  // Save data to AsyncStorage whenever it changes
+  // Save data to AsyncStorage
   useEffect(() => {
     const saveUserData = async () => {
       try {
@@ -60,47 +84,57 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         await AsyncStorage.setItem('@user_age', age);
         await AsyncStorage.setItem('@user_gender', gender);
         await AsyncStorage.setItem('@user_weight', weight);
+        await AsyncStorage.setItem('@workouts', JSON.stringify(workouts));
       } catch (error) {
-        console.log('Error saving user data:', error);
+        console.error('Error saving data:', error);
       }
     };
-
     saveUserData();
-  }, [name, age, gender, weight]);
+  }, [name, age, gender, weight, workouts]);
 
-  // Function to reset user data
+  // Reset user data
   const resetUser = async () => {
     try {
-      setName("");
-      setAge("");
-      setGender("");
-      setWeight("");
-
-      await AsyncStorage.removeItem('@user_name');
-      await AsyncStorage.removeItem('@user_age');
-      await AsyncStorage.removeItem('@user_gender');
-      await AsyncStorage.removeItem('@user_weight');
+      setName('');
+      setAge('');
+      setGender('');
+      setWeight('');
+      setWorkouts({});
+      await AsyncStorage.multiRemove(['@user_name', '@user_age', '@user_gender', '@user_weight', '@workouts']);
     } catch (error) {
-      console.log('Error resetting user data:', error);
+      console.error('Error resetting user data:', error);
     }
   };
 
-  // Memoize the context value to optimize performance
-  const value = useMemo(() => ({
-    name,
-    setName,
-    age,
-    setAge,
-    gender,
-    setGender,
-    weight,
-    setWeight,
-    resetUser,
-  }), [name, age, gender, weight]);
+  // Add a workout
+  const addWorkout = (day: string) => {
+    setWorkouts((prev) => ({
+      ...prev,
+      [day]: new Workout(day),
+    }));
+  };
 
-  return (
-    <UserContext.Provider value={value}>
-      {children}
-    </UserContext.Provider>
+  // Get a workout
+  const getWorkout = (day: string): Workout | undefined => workouts[day];
+
+  const value = useMemo(
+    () => ({
+      name,
+      setName,
+      age,
+      setAge,
+      gender,
+      setGender,
+      weight,
+      setWeight,
+      resetUser,
+      workouts,
+      addWorkout,
+      getWorkout,
+    }),
+    [name, age, gender, weight, workouts]
   );
+
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+  
 };

@@ -1,60 +1,76 @@
-// app/auth/WorkoutDetailsScreen.tsx
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useUserContext } from '../../hooks/useUserContext';
 
-// Import statements
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { useRouter } from "expo-router";
-import { useUserContext } from '../../hooks/useUserContext'; 
-
-// File function
-export default function WorkoutDetailsScreen() {
-
-  // router const to route to other pages
+export default function WorkoutDaysScreen() {
   const router = useRouter();
-  // useUserContext used to get name
-  const { name } = useUserContext();
+  const { name, addWorkout } = useUserContext();
+  const [days, setDays] = useState({
+    Mon: false,
+    Tues: false,
+    Wed: false,
+    Thu: false,
+    Fri: false,
+    Sat: false,
+    Sun: false,
+  });
 
-
-
-
-  // Handlers for navigation buttons
-  const handleNextPress = () => {
-    router.push("./WorkoutRoutineScreen");
+  const handleDayPress = (day) => {
+    setDays((prevDays) => ({ ...prevDays, [day]: !prevDays[day] }));
   };
+
+  const handleContinue = () => {
+    const selectedDays = Object.keys(days).filter((day) => days[day]);
+    if (selectedDays.length > 0) {
+      selectedDays.forEach((day) => addWorkout(day));
+      router.push({
+        pathname: './WorkoutDetailsScreen',
+        params: { selectedDays },
+      });
+    } else {
+      alert('Please select at least one day.');
+    }
+  };
+
   const handleBackPress = () => {
-    router.push("./PersonalDetailsScreen");
+    router.push('./PersonalDetailsScreen');
   };
 
- 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>
         Welcome, <Text style={styles.name}>{name}</Text>!
-      </Text>    
+      </Text>
       <Text style={styles.subheader}>When Do You Usually Workout?</Text>
-    </View>
-    <View>
-      <TouchableOpacity style={styles.dayContainer} onPress={handleDayPress}>
-        <Text style={styles.dayContainerText}>Mon</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.dayContainer} onPress={handleDayPress}>
-        <Text style={styles.dayContainerText}>Tues</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.dayContainer} onPress={handleDayPress}>
-        <Text style={styles.dayContainerText}>Wed</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.dayContainer} onPress={handleDayPress}>
-        <Text style={styles.dayContainerText}>Thu</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.dayContainer} onPress={handleDayPress}>
-        <Text style={styles.dayContainerText}>Fri</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.dayContainer} onPress={handleDayPress}>
-        <Text style={styles.dayContainerText}>Sat</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.dayContainer} onPress={handleDayPress}>
-        <Text style={styles.dayContainerText}>Sun</Text>
-      </TouchableOpacity>
+      <View style={styles.daysContainer}>
+        {Object.keys(days).map((day) => (
+          <TouchableOpacity
+            key={day}
+            style={[styles.dayBox, days[day] && styles.daySelected]}
+            onPress={() => handleDayPress(day)}
+          >
+            <Text style={styles.dayBoxText}>{day}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button} onPress={handleBackPress}>
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.button,
+            { backgroundColor: Object.values(days).some((val) => val) ? 'white' : 'gray' },
+          ]}
+          onPress={handleContinue}
+          disabled={!Object.values(days).some((val) => val)}
+        >
+          <Text style={styles.nextButtonText}>Next</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -62,36 +78,60 @@ export default function WorkoutDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "black",
+    backgroundColor: 'black',
     padding: 20,
   },
   header: {
     fontSize: 40,
-    fontWeight: 700,
-    color: "white",
+    fontWeight: '700',
+    color: 'white',
     paddingTop: 60,
     paddingBottom: 60,
   },
   name: {
-    fontWeight: 800,
-    color: "white",
+    fontWeight: '800',
+    color: 'white',
   },
   subheader: {
     fontSize: 26,
-    fontWeight: 600,
-    color: "white",
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 20,
+  },
+  daysContainer: {
+    marginTop: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+  },
+  dayBox: {
+    width: '22%',
+    marginVertical: 10,
+    marginRight: 10,
+    padding: 15,
+    backgroundColor: '#404040',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  daySelected: {
+    backgroundColor: 'green',
+  },
+  dayBoxText: {
+    color: 'white',
+    fontSize: 18,
   },
   buttonContainer: {
-    flexDirection: "row",            // Arrange buttons horizontally
-    justifyContent: "space-between",  // Space between buttons
-    paddingHorizontal: 30,           // Horizontal padding for the container
+    flexDirection: "row",           
+    justifyContent: "space-between",  
+    paddingHorizontal: 10,           
+    marginTop: 290,
     marginBottom: 100,
   },
   button: {
     borderRadius: 30,
     paddingVertical: 15,
-    width: "30%",                     // Adjust width to fit side by side
-    alignItems: "center",            // Center text horizontally
+    width: "30%",                    
+    alignItems: "center",            
   },
   nextButtonText: {
     color: "black",
@@ -104,4 +144,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   }
+
 });
