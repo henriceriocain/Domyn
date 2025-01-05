@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, FlatList, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
+import { BouncyBox } from '../../components/BouncyBox';
 import type { UserContextProps } from '../../contexts/UserContext';
 import type Workout from '../../models/Workout';
 
@@ -19,6 +20,55 @@ interface CurrentExercise {
   sets: string;
   isEditing: boolean;
 }
+
+const WorkoutNameInput = ({ value, onChangeText }: { value: string; onChangeText: (text: string) => void }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputValue, setInputValue] = useState(value);
+
+  const handlePress = () => {
+    setIsEditing(true);
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    onChangeText(inputValue);
+  };
+
+  const handleChange = (text: string) => {
+    setInputValue(text);
+  };
+
+  return (
+    <BouncyBox 
+      containerStyle={styles.workoutNameContainer}
+      onPress={handlePress}
+    >
+      <View style={styles.workoutNameWrapper}>
+        {isEditing ? (
+          <TextInput
+            style={styles.workoutNameInput}
+            onChangeText={handleChange}
+            onBlur={handleBlur}
+            onSubmitEditing={handleBlur}
+            value={inputValue}
+            placeholder="Enter workout name"
+            placeholderTextColor="#666"
+            autoFocus
+            returnKeyType="done"
+            selectionColor="white"
+          />
+        ) : (
+          <Text style={[
+            styles.workoutNameText,
+            !value && styles.placeholderText
+          ]}>
+            {value || "Enter workout name"}
+          </Text>
+        )}
+      </View>
+    </BouncyBox>
+  );
+};
 
 export default function CustomizeWorkout() {
   const { day } = useLocalSearchParams();
@@ -50,14 +100,7 @@ export default function CustomizeWorkout() {
     }
   };
 
-  const handleExerciseChange = (field: keyof Omit<CurrentExercise, 'isEditing'>, value: string) => {
-    setCurrentExercise(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleExerciseComplete = () => {
+  const checkAndAddExercise = () => {
     if (
       currentExercise.nameOfExercise &&
       currentExercise.weight &&
@@ -88,125 +131,201 @@ export default function CustomizeWorkout() {
     }
   };
 
+  const handleExerciseChange = (field: keyof Omit<CurrentExercise, 'isEditing'>, value: string) => {
+    setCurrentExercise(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>{day}'s Workout</Text>
-      
-      {/* Workout Name Section */}
-      <Text style={styles.subheader}>Name of Workout</Text>
-      <TextInput
-        style={[styles.input, styles.workoutNameInput]}
-        placeholder="Enter workout name"
-        placeholderTextColor="gray"
-        value={dayName}
-        onChangeText={handleDayNameChange}
-      />
-      
-      <Text style={styles.subheader}>Exercises</Text>
-      
-      {/* Exercise List */}
-      {exercises.map((item, index) => (
-        <View key={index} style={styles.exerciseItem}>
-          <Text style={styles.exerciseText}>
-            {item.nameOfExercise}: {item.weight} lbs, {item.sets} sets, {item.reps} reps
-          </Text>
+    <View style={styles.container}>
+      <ScrollView>
+        <View style={styles.content}>
+          <Text style={styles.header}>{day}'s Workout</Text>
+
+          <View style={styles.section}>
+            <Text style={styles.subheader}>Name of Workout</Text>
+            <WorkoutNameInput 
+              value={dayName}
+              onChangeText={handleDayNameChange}
+            />
+          </View>
+          
+          <View style={styles.section}>
+            <Text style={styles.subheader}>Exercises</Text>
+            
+            <View style={styles.exercisesList}>
+              {exercises.map((item, index) => (
+                <BouncyBox 
+                  key={index} 
+                  containerStyle={styles.exerciseItem}
+                >
+                  <Text style={styles.exerciseItemName}>
+                    {item.nameOfExercise}
+                  </Text>
+                  <Text style={styles.exerciseDetails}>
+                    {item.weight} lbs × {item.reps} reps
+                  </Text>
+                  <Text style={styles.exerciseDetails}>
+                    {item.sets} sets
+                  </Text>
+                </BouncyBox>
+              ))}
+            </View>
+            
+            <View style={styles.exerciseInputWrapper}>
+              <BouncyBox containerStyle={styles.exerciseInputContainer}>
+                <TextInput
+                  style={[styles.input, styles.exerciseNameInput]}
+                  placeholder="Exercise Name"
+                  placeholderTextColor="#666"
+                  value={currentExercise.nameOfExercise}
+                  onChangeText={(value) => handleExerciseChange('nameOfExercise', value)}
+                  onBlur={checkAndAddExercise}
+                  returnKeyType="next"
+                />
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={[styles.input, styles.numberInput]}
+                    placeholder="Weight"
+                    placeholderTextColor="#666"
+                    value={currentExercise.weight}
+                    onChangeText={(value) => handleExerciseChange('weight', value)}
+                    onBlur={checkAndAddExercise}
+                    keyboardType="numeric"
+                    returnKeyType="next"
+                  />
+                  <TextInput
+                    style={[styles.input, styles.numberInput]}
+                    placeholder="Reps"
+                    placeholderTextColor="#666"
+                    value={currentExercise.reps}
+                    onChangeText={(value) => handleExerciseChange('reps', value)}
+                    onBlur={checkAndAddExercise}
+                    keyboardType="numeric"
+                    returnKeyType="next"
+                  />
+                  <TextInput
+                    style={[styles.input, styles.numberInput]}
+                    placeholder="Sets"
+                    placeholderTextColor="#666"
+                    value={currentExercise.sets}
+                    onChangeText={(value) => handleExerciseChange('sets', value)}
+                    onBlur={checkAndAddExercise}
+                    keyboardType="numeric"
+                    returnKeyType="done"
+                  />
+                </View>
+              </BouncyBox>
+            </View>
+          </View>
         </View>
-      ))}
-      
-      {/* Exercise Input Section */}
-      <View style={styles.exerciseInputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Exercise Name"
-          placeholderTextColor="gray"
-          value={currentExercise.nameOfExercise}
-          onChangeText={(value) => handleExerciseChange('nameOfExercise', value)}
-        />
-        <View style={styles.inputRow}>
-          <TextInput
-            style={[styles.input, styles.numberInput]}
-            placeholder="Weight"
-            placeholderTextColor="gray"
-            value={currentExercise.weight}
-            onChangeText={(value) => handleExerciseChange('weight', value)}
-            keyboardType="numeric"
-          />
-          <TextInput
-            style={[styles.input, styles.numberInput]}
-            placeholder="Sets"
-            placeholderTextColor="gray"
-            value={currentExercise.sets}
-            onChangeText={(value) => handleExerciseChange('sets', value)}
-            keyboardType="numeric"
-          />
-          <TextInput
-            style={[styles.input, styles.numberInput]}
-            placeholder="Reps"
-            placeholderTextColor="gray"
-            value={currentExercise.reps}
-            onChangeText={(value) => handleExerciseChange('reps', value)}
-            keyboardType="numeric"
-          />
-        </View>
-        <Button 
-          title="Add Exercise" 
-          onPress={handleExerciseComplete}
-        />
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     backgroundColor: 'black',
-    padding: 20 
+    paddingTop: 60,
+  },
+  content: {
+    padding: 20,
   },
   header: {
-    fontSize: 40,
+    fontSize: 32,
     fontWeight: '700',
     color: 'white',
-    paddingTop: 60,
-    paddingBottom: 30,
+    marginBottom: 20,
+  },
+  section: {
+    marginBottom: 20,
   },
   subheader: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '600',
     color: 'white',
     marginBottom: 10,
   },
-  input: { 
-    backgroundColor: '#1a1a1a', 
-    color: 'white', 
-    padding: 10, 
-    borderRadius: 5, 
-    marginBottom: 10 
+  workoutNameContainer: {
+    borderRadius: 10,
+    backgroundColor: '#1a1a1a',
+    height: 50,
+  },
+  workoutNameWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 15,
   },
   workoutNameInput: {
-    marginBottom: 20,
+    color: 'white',
+    fontSize: 16,
+    padding: 0,
+  },
+  workoutNameText: {
+    color: 'white',
+    fontSize: 16,
+    padding: 0,
+    height: 20,  // Match line height
+    textAlignVertical: 'center',
+  },
+  placeholderText: {
+    color: '#666',
+  },
+  input: { 
+    color: 'white',
+    padding: 10,
+  },
+  exerciseNameInput: {
+    fontSize: 16,
+    height: 45,
+  },
+  exercisesList: {
+    marginBottom: 15,
+  },
+  exerciseInputWrapper: {
+    marginBottom: 300,
   },
   exerciseInputContainer: {
     backgroundColor: '#1a1a1a',
     padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
+    borderRadius: 10,
+    height: 150,
   },
   inputRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 10,
+    marginTop: 10,
+    height: 50,
   },
   numberInput: {
     flex: 1,
+    fontSize: 16,
+    backgroundColor: '#262626',
+    borderRadius: 10,
+    height: 45,
   },
   exerciseItem: { 
-    backgroundColor: '#333', 
-    padding: 10, 
-    borderRadius: 5, 
-    marginBottom: 10 
+    backgroundColor: '#333',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    height: 90,
   },
-  exerciseText: { 
-    color: 'white' 
+  exerciseItemName: { 
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+    marginTop: -8,
+  },
+  exerciseDetails: {
+    color: '#999',
+    fontSize: 14,
+    marginBottom: 2,
   },
 });
