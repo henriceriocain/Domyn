@@ -153,5 +153,6 @@ const styles = StyleSheet.create({
         color: "white",
         fontSize: 14,
         marginTop: 20,
+        marginBottom: 30,
     },
 });

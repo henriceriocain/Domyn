@@ -9,7 +9,7 @@ export default function EditSchedule() {
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
 
   // Days of the week
-  const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   // Toggle day selection
   const toggleDay = (day: string) => {
@@ -62,10 +62,8 @@ export default function EditSchedule() {
                 <TouchableOpacity
                   key={day}
                   style={styles.exerciseButton}
-                  onPress={() => router.push("/settings/ExercisesSection")}>
-                  <Text style={styles.exerciseText}>
-                    {day.charAt(0).toUpperCase() + day.slice(1).toLowerCase()}
-                  </Text>
+                  onPress={() => router.push(`/settings/EditExercisesScreen?day=${day}`)}>
+                  <Text style={styles.exerciseText}>{day.charAt(0).toUpperCase() + day.slice(1).toLowerCase()}</Text>
                   <Text style={styles.arrow}>&gt;</Text>
                 </TouchableOpacity>
               ))}
