@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import { 
   Animated, 
   TouchableOpacity, 
   ViewStyle, 
   StyleSheet,
-  TouchableOpacityProps 
+  TouchableOpacityProps,
+  View 
 } from 'react-native';
 
 interface BouncyBoxProps extends TouchableOpacityProps {
@@ -27,83 +28,96 @@ export const BouncyBox: React.FC<BouncyBoxProps> = ({
   delay = 100,
   ...touchableProps
 }) => {
-  const scaleValue = new Animated.Value(1);
+  // Use useRef for animation value to prevent recreation
+  const scaleValue = useRef(new Animated.Value(1)).current;
+  const isAnimating = useRef(false);
 
-  const handlePressIn = () => {
+  // Cache animation configs
+  const shrinkAnimation = useRef(
     Animated.spring(scaleValue, {
       toValue: bounceScale,
       friction,
       tension,
       useNativeDriver: true,
-    }).start();
-  };
+    })
+  ).current;
 
-  const handlePressOut = () => {
+  const expandAnimation = useRef(
     Animated.spring(scaleValue, {
       toValue: 1,
       friction,
       tension,
       useNativeDriver: true,
-    }).start();
-  };
+    })
+  ).current;
 
-  const handlePress = () => {
-    if (onPress) {
-      // Complete bounce animation first
-      Animated.sequence([
-        Animated.spring(scaleValue, {
-          toValue: bounceScale,
-          friction,
-          tension,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleValue, {
-          toValue: 1,
-          friction,
-          tension,
-          useNativeDriver: true,
-        })
-      ]).start();
-
-      // Execute onPress with delay
-      setTimeout(onPress, delay);
+  const handlePressIn = useCallback(() => {
+    if (!isAnimating.current) {
+      isAnimating.current = true;
+      shrinkAnimation.start();
     }
-  };
+  }, [shrinkAnimation]);
+
+  const handlePressOut = useCallback(() => {
+    if (isAnimating.current) {
+      expandAnimation.start(() => {
+        isAnimating.current = false;
+      });
+    }
+  }, [expandAnimation]);
+
+  const handlePress = useCallback(() => {
+    if (!onPress) return;
+
+    if (!isAnimating.current) {
+      isAnimating.current = true;
+      Animated.sequence([shrinkAnimation, expandAnimation]).start(() => {
+        isAnimating.current = false;
+        setTimeout(onPress, delay);
+      });
+    }
+  }, [onPress, delay, shrinkAnimation, expandAnimation]);
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        containerStyle,
-        {
-          transform: [{ scale: scaleValue }]
-        }
-      ]}
-    >
-      <TouchableOpacity
-        activeOpacity={1}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        onPress={handlePress}
-        style={styles.touchable}
-        {...touchableProps}
+    <View style={[styles.container, containerStyle]}>
+      <Animated.View
+        style={[
+          styles.animatedContainer,
+          {
+            transform: [{ scale: scaleValue }]
+          }
+        ]}
       >
-        {children}
-      </TouchableOpacity>
-    </Animated.View>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          onPress={handlePress}
+          style={styles.touchable}
+          {...touchableProps}
+        >
+          {children}
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
-    minHeight: 40, // Added default minimum height
-    padding: 10, // Added padding for better content spacing
+    minHeight: 40,
+  },
+  animatedContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
   touchable: {
     width: '100%',
     height: '100%',
-    justifyContent: 'center', // Added to center content vertically
-    alignItems: 'flex-start', // Changed to flex-start to align text left
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: 10,
   },
 });

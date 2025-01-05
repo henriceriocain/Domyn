@@ -21,13 +21,61 @@ interface CurrentExercise {
   isEditing: boolean;
 }
 
+const WorkoutNameInput = ({ value, onChangeText }: { value: string; onChangeText: (text: string) => void }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputValue, setInputValue] = useState(value);
+
+  const handlePress = () => {
+    setIsEditing(true);
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    onChangeText(inputValue);
+  };
+
+  const handleChange = (text: string) => {
+    setInputValue(text);
+  };
+
+  return (
+    <BouncyBox 
+      containerStyle={styles.workoutNameContainer}
+      onPress={handlePress}
+    >
+      <View style={styles.workoutNameWrapper}>
+        {isEditing ? (
+          <TextInput
+            style={styles.workoutNameInput}
+            onChangeText={handleChange}
+            onBlur={handleBlur}
+            onSubmitEditing={handleBlur}
+            value={inputValue}
+            placeholder="Enter workout name"
+            placeholderTextColor="#666"
+            autoFocus
+            returnKeyType="done"
+            selectionColor="white"
+          />
+        ) : (
+          <Text style={[
+            styles.workoutNameText,
+            !value && styles.placeholderText
+          ]}>
+            {value || "Enter workout name"}
+          </Text>
+        )}
+      </View>
+    </BouncyBox>
+  );
+};
+
 export default function CustomizeWorkout() {
   const { day } = useLocalSearchParams();
   const { workouts, addWorkout, getWorkout, updateWorkout } = useUserContext() as UserContextProps;
   const existingWorkout = getWorkout(day as string);
   
   const [dayName, setDayName] = useState(existingWorkout?.dayName || day as string);
-  const [isEditingName, setIsEditingName] = useState(false);
   const [exercises, setExercises] = useState<Exercise[]>(existingWorkout?.exercise || []);
   const [currentExercise, setCurrentExercise] = useState<CurrentExercise>({
     nameOfExercise: '',
@@ -50,14 +98,6 @@ export default function CustomizeWorkout() {
       workout.dayName = name;
       updateWorkout(day as string, workout);
     }
-  };
-
-  const handleWorkoutNamePress = () => {
-    setIsEditingName(true);
-  };
-
-  const handleWorkoutNameBlur = () => {
-    setIsEditingName(false);
   };
 
   const checkAndAddExercise = () => {
@@ -106,26 +146,10 @@ export default function CustomizeWorkout() {
 
           <View style={styles.section}>
             <Text style={styles.subheader}>Name of Workout</Text>
-            <BouncyBox 
-              containerStyle={styles.workoutNameContainer}
-              onPress={handleWorkoutNamePress}
-            >
-              {isEditingName ? (
-                <TextInput
-                  style={[styles.input, styles.workoutNameInput]}
-                  placeholder="Enter workout name"
-                  placeholderTextColor="#666"
-                  value={dayName}
-                  onChangeText={handleDayNameChange}
-                  onBlur={handleWorkoutNameBlur}
-                  autoFocus
-                />
-              ) : (
-                <Text style={[styles.input, styles.workoutNameInput]}>
-                  {dayName || "Enter workout name"}
-                </Text>
-              )}
-            </BouncyBox>
+            <WorkoutNameInput 
+              value={dayName}
+              onChangeText={handleDayNameChange}
+            />
           </View>
           
           <View style={styles.section}>
@@ -231,6 +255,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     height: 50,
   },
+  workoutNameWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 15,
+  },
+  workoutNameInput: {
+    color: 'white',
+    fontSize: 16,
+    padding: 0,
+  },
+  workoutNameText: {
+    color: 'white',
+    fontSize: 16,
+    padding: 0,
+    height: 20,  // Match line height
+    textAlignVertical: 'center',
+  },
+  placeholderText: {
+    color: '#666',
+  },
   input: { 
     color: 'white',
     padding: 10,
@@ -238,10 +282,6 @@ const styles = StyleSheet.create({
   exerciseNameInput: {
     fontSize: 16,
     height: 45,
-  },
-  workoutNameInput: {
-    fontSize: 16,
-    height: 50,
   },
   exercisesList: {
     marginBottom: 15,
