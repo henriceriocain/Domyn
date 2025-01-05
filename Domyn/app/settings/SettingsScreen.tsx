@@ -9,7 +9,7 @@ export default function SettingsScreen() {
         <View style={styles.container}>
             <Text style={styles.header}>Settings</Text>
 
-            // Profile Settings Section
+            {/* Profile Settings Section */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Profile Settings</Text>
 
@@ -24,7 +24,7 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
             </View>
 
-            // Other section
+            {/* Other section */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Other</Text>
 
@@ -34,7 +34,7 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
             </View>
 
-            // Footer
+            {/* Footer */}
             <Text style={styles.footer}>Domyn</Text>
         </View>
     );

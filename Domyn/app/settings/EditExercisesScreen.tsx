@@ -11,20 +11,20 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 
 export default function EditExercisesScreen() {
 
-    const params = useLocalSearchParams(); // Use `useLocalSearchParams` to extract query params
-    const day = params.day as string; // Extract `day` as a string
+    const params = useLocalSearchParams(); {/* Use `useLocalSearchParams` to extract query params */}
+    const day = params.day as string; {/* Extract `day` as a string */}
 
 
-    // State for workout name and exercises
+    {/* State for workout name and exercises */}
     const [workoutName, setWorkoutName] = useState("");
     const [exercises, setExercises] = useState<{ name: string; weight: string; reps: string }[]>([{ name: "", weight: "", reps: "" }]);
 
-    // Add a new exercise input
+    {/* Add a new exercise input */}
     const addExercise = () => {
         setExercises([...exercises, { name: "", weight: "", reps: "" }]);
     };
 
-    // Update an exercise field
+    {/* Update an exercise field */}
     const updateExercise = (
         index: number, field: "name" | "weight" | "reps", value: string
     ) => {

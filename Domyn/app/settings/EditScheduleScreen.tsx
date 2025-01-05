@@ -5,13 +5,13 @@ import { useRouter } from "expo-router";
 export default function EditSchedule() {
   const router = useRouter();
 
-  // State to store selected days
+  {/* State to store selected days */}
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
 
-  // Days of the week
+  {/* Days of the week */}
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-  // Toggle day selection
+  {/* Toggle day selection */}
   const toggleDay = (day: string) => {
     if (selectedDays.includes(day)) {
       setSelectedDays(selectedDays.filter((d) => d !== day));
@@ -23,15 +23,15 @@ export default function EditSchedule() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        // Back button
+        {/* Back button */}
         <TouchableOpacity onPress={() => router.push("/settings/SettingsScreen")}>
           <Text style={styles.backText}>&lt; Back</Text>
         </TouchableOpacity>
 
-        // Title
+        {/* Title */}
         <Text style={styles.title}>Edit Schedule</Text>
 
-        // Edit workout days
+        {/* Edit workout days */}
         <Text style={styles.subtitle}>Edit Workout Days:</Text>
         <View style={styles.daysContainer}>
           {days.map((day) => (
@@ -53,7 +53,7 @@ export default function EditSchedule() {
           ))}
         </View>
 
-        // Exercise section
+        {/* Exercise section */}
         {selectedDays.length > 0 && (
           <>
             <Text style={styles.subtitle}>Exercises</Text>
@@ -71,7 +71,7 @@ export default function EditSchedule() {
           </>
         )}
 
-        // Footer
+        {/* Footer */}
         <Text style={styles.footer}>Domyn</Text>
       </ScrollView>
     </View>
