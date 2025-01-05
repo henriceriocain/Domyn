@@ -1,7 +1,7 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef } from 'react';
 import { 
   Animated, 
-  TouchableOpacity, 
+  TouchableWithoutFeedback, 
   ViewStyle, 
   StyleSheet,
   TouchableOpacityProps,
@@ -28,96 +28,63 @@ export const BouncyBox: React.FC<BouncyBoxProps> = ({
   delay = 100,
   ...touchableProps
 }) => {
-  // Use useRef for animation value to prevent recreation
   const scaleValue = useRef(new Animated.Value(1)).current;
-  const isAnimating = useRef(false);
 
-  // Cache animation configs
-  const shrinkAnimation = useRef(
+  const handlePressIn = () => {
     Animated.spring(scaleValue, {
       toValue: bounceScale,
       friction,
       tension,
       useNativeDriver: true,
-    })
-  ).current;
+    }).start();
+  };
 
-  const expandAnimation = useRef(
+  const handlePressOut = () => {
     Animated.spring(scaleValue, {
       toValue: 1,
       friction,
       tension,
       useNativeDriver: true,
-    })
-  ).current;
+    }).start();
+  };
 
-  const handlePressIn = useCallback(() => {
-    if (!isAnimating.current) {
-      isAnimating.current = true;
-      shrinkAnimation.start();
-    }
-  }, [shrinkAnimation]);
-
-  const handlePressOut = useCallback(() => {
-    if (isAnimating.current) {
-      expandAnimation.start(() => {
-        isAnimating.current = false;
-      });
-    }
-  }, [expandAnimation]);
-
-  const handlePress = useCallback(() => {
+  const handlePress = () => {
     if (!onPress) return;
-
-    if (!isAnimating.current) {
-      isAnimating.current = true;
-      Animated.sequence([shrinkAnimation, expandAnimation]).start(() => {
-        isAnimating.current = false;
-        setTimeout(onPress, delay);
-      });
-    }
-  }, [onPress, delay, shrinkAnimation, expandAnimation]);
+    
+    setTimeout(onPress, delay);
+  };
 
   return (
-    <View style={[styles.container, containerStyle]}>
+    <TouchableWithoutFeedback
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={handlePress}
+      {...touchableProps}
+    >
       <Animated.View
         style={[
-          styles.animatedContainer,
+          styles.container,
+          containerStyle,
           {
             transform: [{ scale: scaleValue }]
           }
         ]}
       >
-        <TouchableOpacity
-          activeOpacity={1}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          onPress={handlePress}
-          style={styles.touchable}
-          {...touchableProps}
-        >
+        <View style={styles.contentContainer}>
           {children}
-        </TouchableOpacity>
+        </View>
       </Animated.View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    overflow: 'hidden',
     minHeight: 40,
+    overflow: 'hidden',
   },
-  animatedContainer: {
+  contentContainer: {
     flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  touchable: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
     padding: 10,
-  },
+  }
 });

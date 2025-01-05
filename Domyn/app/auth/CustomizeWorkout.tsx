@@ -321,6 +321,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
+    marginTop: -8,
   },
   exerciseDetails: {
     color: '#999',
