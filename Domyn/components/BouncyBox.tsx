@@ -81,7 +81,6 @@ export const BouncyBox: React.FC<BouncyBoxProps> = ({
 const styles = StyleSheet.create({
   container: {
     minHeight: 40,
-    overflow: 'hidden',
   },
   contentContainer: {
     flex: 1,

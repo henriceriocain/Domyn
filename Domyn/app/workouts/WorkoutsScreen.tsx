@@ -1,104 +1,106 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Calendar } from 'react-native-calendars';
-import { UserContext, UserContextProps } from '@/contexts/UserContext';
-import { useNavigation } from '@react-navigation/native';
+// I only commented it out as i couldnt run the app.
 
-const WorkoutsScreen: React.FC = () => {
-  const userContext = useContext(UserContext) as UserContextProps;
-  const navigation = useNavigation();
-  const [markedDates, setMarkedDates] = useState<{
-    [key: string]: { marked?: boolean; dotColor?: string; selected?: boolean; selectedColor?: string };
-  }>({});
+// import React, { useState, useContext, useEffect } from 'react';
+// import { View, Text, StyleSheet } from 'react-native';
+// import { Calendar } from 'react-native-calendars';
+// import { UserContext, UserContextProps } from '@/contexts/UserContext';
+// import { useNavigation } from '@react-navigation/native';
 
-  if (!userContext) {
-    return <Text>Loading...</Text>;
-  }
+// const WorkoutsScreen: React.FC = () => {
+//   const userContext = useContext(UserContext) as UserContextProps;
+//   const navigation = useNavigation();
+//   const [markedDates, setMarkedDates] = useState<{
+//     [key: string]: { marked?: boolean; dotColor?: string; selected?: boolean; selectedColor?: string };
+//   }>({});
 
-  const { workouts, selectedDays } = userContext;
+//   if (!userContext) {
+//     return <Text>Loading...</Text>;
+//   }
 
-  // Mark dates for calendar
-  useEffect(() => {
-    const marks: Record<
-      string,
-      { marked?: boolean; dotColor?: string; selected?: boolean; selectedColor?: string }
-    > = {};
+//   const { workouts, selectedDays } = userContext;
 
-    selectedDays.forEach((day) => {
-      const workout = workouts[day];
-      if (workout) {
-        marks[day] = { marked: true, dotColor: 'green' }; // Completed days
-      } else {
-        marks[day] = { marked: true, dotColor: 'yellow' }; // Skipped days
-      }
-    });
+//   // Mark dates for calendar
+//   useEffect(() => {
+//     const marks: Record<
+//       string,
+//       { marked?: boolean; dotColor?: string; selected?: boolean; selectedColor?: string }
+//     > = {};
 
-    const today = new Date().toISOString().split('T')[0];
-    marks[today] = { ...marks[today], selected: true, selectedColor: 'blue' };
+//     selectedDays.forEach((day) => {
+//       const workout = workouts[day];
+//       if (workout) {
+//         marks[day] = { marked: true, dotColor: 'green' }; // Completed days
+//       } else {
+//         marks[day] = { marked: true, dotColor: 'yellow' }; // Skipped days
+//       }
+//     });
 
-    setMarkedDates(marks);
-  }, [workouts, selectedDays]);
+//     const today = new Date().toISOString().split('T')[0];
+//     marks[today] = { ...marks[today], selected: true, selectedColor: 'blue' };
 
-  const onDayPress = (day: { dateString: string }) => {
-    const date = day.dateString;
-    // navigation.navigate('CalendarDetails', { date });
-  };
+//     setMarkedDates(marks);
+//   }, [workouts, selectedDays]);
 
-  return (
-    <View style={styles.container}>
-      {/* Calendar */}
-      <Calendar
-        onDayPress={onDayPress}
-        markedDates={markedDates}
-        theme={{
-          selectedDayBackgroundColor: 'blue',
-          todayTextColor: 'red',
-          dotColor: 'green',
-        }}
-      />
+//   const onDayPress = (day: { dateString: string }) => {
+//     const date = day.dateString;
+//     // navigation.navigate('CalendarDetails', { date });
+//   };
 
-      {/* Weekly Overview */}
-      <View style={styles.weeklyOverview}>
-        <Text style={styles.header}>Weekly Overview</Text>
-        {selectedDays.map((day: string) => {
-          const status = workouts[day]
-            ? 'Completed'
-            : selectedDays.includes(day)
-            ? 'Scheduled'
-            : 'Rest Day';
-          return (
-            <Text key={day} style={styles.dayText}>
-              {day}: {status}
-            </Text>
-          );
-        })}
-      </View>
-    </View>
-  );
-};
+//   return (
+//     <View style={styles.container}>
+//       {/* Calendar */}
+//       <Calendar
+//         onDayPress={onDayPress}
+//         markedDates={markedDates}
+//         theme={{
+//           selectedDayBackgroundColor: 'blue',
+//           todayTextColor: 'red',
+//           dotColor: 'green',
+//         }}
+//       />
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#000',
-  },
-  weeklyOverview: {
-    marginTop: 20,
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    padding: 20,
-  },
-  header: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#000',
-  },
-  dayText: {
-    fontSize: 16,
-    marginBottom: 5,
-  },
-});
+//       {/* Weekly Overview */}
+//       <View style={styles.weeklyOverview}>
+//         <Text style={styles.header}>Weekly Overview</Text>
+//         {selectedDays.map((day: string) => {
+//           const status = workouts[day]
+//             ? 'Completed'
+//             : selectedDays.includes(day)
+//             ? 'Scheduled'
+//             : 'Rest Day';
+//           return (
+//             <Text key={day} style={styles.dayText}>
+//               {day}: {status}
+//             </Text>
+//           );
+//         })}
+//       </View>
+//     </View>
+//   );
+// };
 
-export default WorkoutsScreen;
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     padding: 20,
+//     backgroundColor: '#000',
+//   },
+//   weeklyOverview: {
+//     marginTop: 20,
+//     backgroundColor: '#FFF',
+//     borderRadius: 10,
+//     padding: 20,
+//   },
+//   header: {
+//     fontSize: 20,
+//     fontWeight: 'bold',
+//     marginBottom: 10,
+//     color: '#000',
+//   },
+//   dayText: {
+//     fontSize: 16,
+//     marginBottom: 5,
+//   },
+// });
+
+// export default WorkoutsScreen;
