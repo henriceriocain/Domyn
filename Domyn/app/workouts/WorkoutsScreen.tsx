@@ -41,7 +41,7 @@ const WorkoutsScreen: React.FC = () => {
 
   const onDayPress = (day: { dateString: string }) => {
     const date = day.dateString;
-    navigation.navigate('CalendarDetails', { date });
+    // navigation.navigate('CalendarDetails', { date });
   };
 
   return (
