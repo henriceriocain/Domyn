@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 16,
     color: "white",
-    marginTop: 40,
+    marginTop: 50,
     marginBottom: 40,
   },
   title: {

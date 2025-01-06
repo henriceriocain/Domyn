@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     backText: {
         fontSize: 16,
         color: "white",
-        marginTop: 40,
+        marginTop: 50,
     },
     doneText: {
         fontSize: 16,
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
         paddingVertical: 7,
         borderRadius: 15,
         fontWeight: "bold",
-        marginTop: 40,
+        marginTop: 50,
     },
     title: {
         fontSize: 24,

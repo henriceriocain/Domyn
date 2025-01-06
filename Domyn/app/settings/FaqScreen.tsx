@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 16,
     color: "white",
-    marginTop: 60,
+    marginTop: 50,
     marginBottom: 20,
   },
   title: {

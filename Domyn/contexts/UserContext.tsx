@@ -39,6 +39,9 @@ export interface UserContextProps {
   updateWorkout: (day: string, workout: Workout) => void;  // Added this line
   selectedDays: string[];
   setSelectedDays: (days: string[]) => void;
+  skippedDays: { [day: string]: string }; // calendar
+  addSkippedDay: (day: string, reason: string) => void; // calendar
+  getSkippedDayReason: (day: string) => string | undefined; // calendar
 }
 
 export const UserContext = createContext<UserContextProps | undefined>(undefined);
@@ -60,6 +63,10 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   // Selected days state
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
 
+  // Skipped days state
+  const [skippedDays, setSkippedDays] = useState<{ [day: string]: string }>({}); // calendar
+
+
   // Load user data from AsyncStorage
   useEffect(() => {
     const loadUserData = async () => {
@@ -70,6 +77,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         const storedWeight = await AsyncStorage.getItem('@user_weight');
         const storedWorkouts = await AsyncStorage.getItem('@workouts');
         const storedSelectedDays = await AsyncStorage.getItem('@selected_days');
+        const storedSkippedDays = await AsyncStorage.getItem('@skipped_days'); // calendar
 
         if (storedName) setName(storedName);
         if (storedAge) setAge(storedAge);
@@ -89,6 +97,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           setWorkouts(reconstructedWorkouts);
         }
         if (storedSelectedDays) setSelectedDays(JSON.parse(storedSelectedDays));
+        if (storedSkippedDays) setSkippedDays(JSON.parse(storedSkippedDays)); // calendar
       } catch (error) {
         console.error('Error loading data from AsyncStorage:', error);
       }
@@ -106,12 +115,13 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         await AsyncStorage.setItem('@user_weight', weight);
         await AsyncStorage.setItem('@workouts', JSON.stringify(workouts));
         await AsyncStorage.setItem('@selected_days', JSON.stringify(selectedDays));
+        await AsyncStorage.setItem('@skipped_days', JSON.stringify(skippedDays)); // calendar
       } catch (error) {
         console.error('Error saving data to AsyncStorage:', error);
       }
     };
     saveUserData();
-  }, [name, age, gender, weight, workouts, selectedDays]);
+  }, [name, age, gender, weight, workouts, selectedDays, skippedDays]);
 
   // Reset user data
   const resetUser = async () => {
@@ -122,6 +132,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       setWeight('');
       setWorkouts({});
       setSelectedDays([]);
+      setSkippedDays({}); // calendar
       await AsyncStorage.multiRemove([
         '@user_name',
         '@user_age',
@@ -129,6 +140,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         '@user_weight',
         '@workouts',
         '@selected_days',
+        '@skipped_days',
       ]);
     } catch (error) {
       console.error('Error resetting user data:', error);
@@ -157,6 +169,14 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }));
   };
 
+  // Add a skipped day
+  const addSkippedDay = (day: string, reason: string) => {
+    setSkippedDays((prev) => ({ ...prev, [day]: reason }));
+  };
+
+  // Get the reason for a skipped day
+  const getSkippedDayReason = (day: string): string | undefined => skippedDays[day];
+
   const value = useMemo(
     () => ({
       name,
@@ -174,8 +194,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       updateWorkout,  // Added this line
       selectedDays,
       setSelectedDays,
+      skippedDays, // calendar
+      addSkippedDay, // calendar
+      getSkippedDayReason, // calendar
     }),
-    [name, age, gender, weight, workouts, selectedDays]
+    [name, age, gender, weight, workouts, selectedDays, skippedDays]
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
