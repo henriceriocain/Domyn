@@ -6,10 +6,11 @@ import {
   TextInput, 
   ScrollView, 
   Animated, 
-  Easing, 
   TouchableWithoutFeedback, 
   KeyboardAvoidingView, 
-  Platform 
+  Platform, 
+  Keyboard,
+  Alert
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
@@ -52,7 +53,7 @@ const WorkoutNameInput = ({ value, onChangeText }: { value: string; onChangeText
   return (
     <BouncyBox 
       containerStyle={styles.workoutNameContainer}
-      onPress={!isEditing ? handlePress : undefined} // Only handle press when not editing
+      onPress={!isEditing ? handlePress : undefined}
     >
       <View style={styles.workoutNameWrapper}>
         {isEditing ? (
@@ -67,7 +68,7 @@ const WorkoutNameInput = ({ value, onChangeText }: { value: string; onChangeText
             autoFocus
             returnKeyType="done"
             selectionColor="white"
-            multiline // Allow multiline input
+            multiline
           />
         ) : (
           <Text style={[
@@ -82,7 +83,6 @@ const WorkoutNameInput = ({ value, onChangeText }: { value: string; onChangeText
   );
 };
 
-// New Component: EditableExerciseItem
 const EditableExerciseItem = ({
   exercise,
   index,
@@ -98,72 +98,106 @@ const EditableExerciseItem = ({
   handleExerciseFieldChange: (index: number, field: keyof Exercise, value: string) => void;
   saveExercise: (index: number) => void;
 }) => {
-  // Animation value
   const animation = useRef(new Animated.Value(isEditing ? 1 : 0)).current;
+  const [localExercise, setLocalExercise] = useState({
+    nameOfExercise: exercise.nameOfExercise,
+    weight: exercise.weight.toString(),
+    reps: exercise.reps.toString(),
+    sets: exercise.sets.toString(),
+  });
 
   useEffect(() => {
     Animated.spring(animation, {
       toValue: isEditing ? 1 : 0,
-      friction: 6, // Reduced friction for smoother animation
-      tension: 100, // Adjusted tension to reduce bounciness
+      friction: 6,
+      tension: 100,
       useNativeDriver: false,
     }).start();
   }, [isEditing]);
 
-  // Interpolate height based on animation value
   const animatedHeight = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: [100, 150], // Adjust these values as needed
+    outputRange: [100, 150], // Reverted height for correct padding
   });
+
+  const handleLocalChange = (field: keyof typeof localExercise, value: string) => {
+    setLocalExercise(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    if (field === 'nameOfExercise') {
+      handleExerciseFieldChange(index, field, value);
+    } else {
+      handleExerciseFieldChange(index, field as keyof Exercise, value);
+    }
+  };
+
+  const validateFields = () => {
+    return (
+      localExercise.nameOfExercise.trim() !== '' &&
+      localExercise.weight.trim() !== '' &&
+      localExercise.reps.trim() !== '' &&
+      localExercise.sets.trim() !== ''
+    );
+  };
+
+  const handleDone = () => {
+    if (validateFields()) {
+      saveExercise(index);
+    } else {
+      Alert.alert('Validation Error', 'Please fill out all fields correctly.');
+    }
+  };
 
   return (
     <Animated.View style={[styles.exerciseItem, { height: animatedHeight }]}>
       <BouncyBox 
         containerStyle={styles.exerciseContent}
-        onPress={!isEditing ? () => toggleEditing(index) : undefined} // Disable onPress when editing
+        onPress={!isEditing ? () => toggleEditing(index) : undefined}
       >
         {isEditing ? (
           <View style={styles.editContainer}>
             <TextInput
               style={[styles.input, styles.exerciseNameInput]}
-              value={exercise.nameOfExercise}
-              onChangeText={(text) => handleExerciseFieldChange(index, 'nameOfExercise', text)}
-              onBlur={() => saveExercise(index)}
-              autoFocus
+              value={localExercise.nameOfExercise}
+              onChangeText={(text) => handleLocalChange('nameOfExercise', text)}
               placeholder="Exercise Name"
               placeholderTextColor="#666"
-              returnKeyType="next"
+              returnKeyType="done"
+              autoFocus
+              onSubmitEditing={handleDone} // Ensures handleDone is called on "done"
             />
             <View style={styles.inputRow}>
               <TextInput
                 style={[styles.input, styles.numberInput]}
-                value={exercise.weight.toString()}
-                onChangeText={(text) => handleExerciseFieldChange(index, 'weight', text)}
+                value={localExercise.weight}
+                onChangeText={(text) => handleLocalChange('weight', text)}
                 keyboardType="numeric"
-                onBlur={() => saveExercise(index)}
                 placeholder="Weight"
                 placeholderTextColor="#666"
-                returnKeyType="next"
+                returnKeyType="done"
+                onSubmitEditing={handleDone} // Ensures handleDone is called on "done"
               />
               <TextInput
                 style={[styles.input, styles.numberInput]}
-                value={exercise.reps.toString()}
-                onChangeText={(text) => handleExerciseFieldChange(index, 'reps', text)}
+                value={localExercise.reps}
+                onChangeText={(text) => handleLocalChange('reps', text)}
                 keyboardType="numeric"
-                onBlur={() => saveExercise(index)}
                 placeholder="Reps"
                 placeholderTextColor="#666"
-                returnKeyType="next"
+                returnKeyType="done"
+                onSubmitEditing={handleDone} // Ensures handleDone is called on "done"
               />
               <TextInput
                 style={[styles.input, styles.numberInput]}
-                value={exercise.sets.toString()}
-                onChangeText={(text) => handleExerciseFieldChange(index, 'sets', text)}
+                value={localExercise.sets}
+                onChangeText={(text) => handleLocalChange('sets', text)}
                 keyboardType="numeric"
-                onBlur={() => saveExercise(index)}
                 placeholder="Sets"
                 placeholderTextColor="#666"
                 returnKeyType="done"
+                onSubmitEditing={handleDone} // Ensures handleDone is called on "done"
               />
             </View>
           </View>
@@ -197,10 +231,9 @@ export default function CustomizeWorkout() {
     weight: '',
     sets: '',
     reps: '',
-    isEditing: true
+    isEditing: false // Ensure new exercises are not in edit mode initially
   });
   
-  // State to track which exercises are being edited
   const [editingExercises, setEditingExercises] = useState<{ [key: number]: boolean }>({});
   
   useEffect(() => {
@@ -208,10 +241,40 @@ export default function CustomizeWorkout() {
       addWorkout(day as string);
     }
   }, [day]);
-
-  // Handle tap outside to close all edit modes
+  
   const handleOutsideTap = () => {
-    setEditingExercises({});
+    // Dismiss keyboard immediately
+    Keyboard.dismiss();
+
+    // Get all currently editing exercises
+    const editingIndices = Object.entries(editingExercises)
+      .filter(([_, isEditing]) => isEditing)
+      .map(([index]) => parseInt(index));
+
+    // For each editing exercise, validate and save if valid
+    editingIndices.forEach(index => {
+      const exercise = exercises[index];
+      if (
+        exercise.nameOfExercise.trim() !== '' &&
+        exercise.weight > 0 &&
+        exercise.reps > 0 &&
+        exercise.sets > 0
+      ) {
+        // Update workout and reset editing state in one go
+        const workout = getWorkout(day as string);
+        if (workout) {
+          workout.exercise[index] = exercise;
+          updateWorkout(day as string, workout);
+          setEditingExercises(prev => ({
+            ...prev,
+            [index]: false
+          }));
+        }
+      } else {
+        // If validation fails, optionally alert the user
+        Alert.alert('Validation Error', `Please complete all fields for exercise "${exercise.nameOfExercise || 'Unnamed Exercise'}".`);
+      }
+    });
   };
   
   const handleDayNameChange = (name: string) => {
@@ -246,7 +309,7 @@ export default function CustomizeWorkout() {
           weight: '',
           sets: '',
           reps: '',
-          isEditing: true
+          isEditing: false
         });
         
         updateWorkout(day as string, workout);
@@ -261,7 +324,6 @@ export default function CustomizeWorkout() {
     }));
   };
 
-  // Toggle edit mode for a specific exercise
   const toggleEditingExercise = (index: number) => {
     setEditingExercises(prev => ({
       ...prev,
@@ -269,7 +331,6 @@ export default function CustomizeWorkout() {
     }));
   };
 
-  // Handle changes to exercise fields when editing
   const handleExerciseFieldChange = (index: number, field: keyof Exercise, value: string) => {
     setExercises(prevExercises => {
       const updatedExercises = [...prevExercises];
@@ -282,14 +343,21 @@ export default function CustomizeWorkout() {
     });
   };
 
-  // Save edited exercise and update the workout
   const saveExercise = (index: number) => {
     const workout = getWorkout(day as string);
     if (workout) {
       workout.exercise[index] = exercises[index];
       updateWorkout(day as string, workout);
     }
-    toggleEditingExercise(index);
+    
+    // Update only the specific exercise's editing state to false
+    setEditingExercises(prev => ({
+      ...prev,
+      [index]: false
+    }));
+
+    // Dismiss the keyboard after updating the state
+    Keyboard.dismiss();
   };
 
   return (
@@ -319,7 +387,7 @@ export default function CustomizeWorkout() {
                     key={index} 
                     exercise={item} 
                     index={index}
-                    isEditing={editingExercises[index]}
+                    isEditing={!!editingExercises[index]}
                     toggleEditing={toggleEditingExercise}
                     handleExerciseFieldChange={handleExerciseFieldChange}
                     saveExercise={saveExercise}
@@ -387,7 +455,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingTop: 60, // Adjusted padding to accommodate KeyboardAvoidingView
+    paddingTop: 60,
   },
   header: {
     fontSize: 32,
@@ -407,8 +475,8 @@ const styles = StyleSheet.create({
   workoutNameContainer: {
     borderRadius: 10,
     backgroundColor: '#1a1a1a',
-    minHeight: 50, // Changed from fixed height to minHeight
-    paddingVertical: 10, // Added padding for better spacing
+    minHeight: 50,
+    paddingVertical: 10,
   },
   workoutNameWrapper: {
     flex: 1,
@@ -419,8 +487,8 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     padding: 0,
-    minHeight: 40, // Allow the input to expand
-    textAlignVertical: 'top', // Ensure text starts at the top
+    minHeight: 40,
+    textAlignVertical: 'top',
   },
   workoutNameText: {
     color: 'white',
@@ -440,7 +508,7 @@ const styles = StyleSheet.create({
   },
   exerciseNameInput: {
     fontSize: 16,
-    height: 45,
+    height: 40, // Reverted height to original
     flex: 1,
     marginBottom: 10,
     color: 'white',
@@ -449,13 +517,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   exerciseInputWrapper: {
-    marginBottom: 20, // Reduced margin to prevent excessive space
+    marginBottom: 20,
   },
   exerciseInputContainer: {
     backgroundColor: '#1a1a1a',
     padding: 10,
     borderRadius: 10,
-    // Removed fixed height to allow expansion
   },
   inputRow: {
     flexDirection: 'row',
@@ -473,11 +540,11 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   exerciseItem: { 
-    backgroundColor: '#1a1a1a', // Match create exercise box background
-    padding: 10, // Match padding
-    borderRadius: 10, // Match border radius
+    backgroundColor: '#1a1a1a',
+    padding: 10,
+    borderRadius: 10,
     marginBottom: 10,
-    overflow: 'hidden', // Ensure content doesn't overflow
+    overflow: 'hidden',
   },
   exerciseContent: {
     flex: 1,
