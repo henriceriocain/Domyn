@@ -1,3 +1,5 @@
+// Working on functionality to where when you click outside the keyboard with all fields, the keyboard minimizes with the "edit card" state
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
