@@ -1,3 +1,5 @@
+// components / BouncyBox.tsx
+
 import React, { useRef } from 'react';
 import { 
   Animated, 

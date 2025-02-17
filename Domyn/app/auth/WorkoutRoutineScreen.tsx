@@ -1,3 +1,5 @@
+// WorkoutRoutineScreen.tsx
+
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';

@@ -1,3 +1,5 @@
+// contexts / UserContext.tsx
+
 // What does this file do?
 //    This file stores global data within our app.
 
