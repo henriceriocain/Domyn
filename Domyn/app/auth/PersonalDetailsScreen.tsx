@@ -1,4 +1,4 @@
-// PersonalDetailsScreen.tsx
+// app / auth / PersonalDetailsScreen.tsx
 
 // Import statement
 import React, { useContext } from 'react';

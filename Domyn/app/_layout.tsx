@@ -1,4 +1,5 @@
-// _layout.tsx
+// app / _layout.tsx
+
 import React from 'react';
 import { UserProvider } from '../contexts/UserContext';
 import { Stack } from 'expo-router';

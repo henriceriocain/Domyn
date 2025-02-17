@@ -1,14 +1,7 @@
 // components / BouncyBox.tsx
 
 import React, { useRef } from 'react';
-import { 
-  Animated, 
-  TouchableWithoutFeedback, 
-  ViewStyle, 
-  StyleSheet,
-  TouchableOpacityProps,
-  View 
-} from 'react-native';
+import { Animated, TouchableWithoutFeedback, ViewStyle, StyleSheet, TouchableOpacityProps, View } from 'react-native';
 
 interface BouncyBoxProps extends TouchableOpacityProps {
   children: React.ReactNode;
@@ -17,7 +10,7 @@ interface BouncyBoxProps extends TouchableOpacityProps {
   bounceScale?: number;
   friction?: number;
   tension?: number;
-  delay?: number;
+  disable?: boolean;
 }
 
 export const BouncyBox: React.FC<BouncyBoxProps> = ({
@@ -27,12 +20,13 @@ export const BouncyBox: React.FC<BouncyBoxProps> = ({
   bounceScale = 0.97,
   friction = 20,
   tension = 200,
-  delay = 100,
+  disable = false,
   ...touchableProps
 }) => {
   const scaleValue = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
+    if (disable) return;
     Animated.spring(scaleValue, {
       toValue: bounceScale,
       friction,
@@ -42,6 +36,7 @@ export const BouncyBox: React.FC<BouncyBoxProps> = ({
   };
 
   const handlePressOut = () => {
+    if (disable) return;
     Animated.spring(scaleValue, {
       toValue: 1,
       friction,
@@ -51,9 +46,8 @@ export const BouncyBox: React.FC<BouncyBoxProps> = ({
   };
 
   const handlePress = () => {
-    if (!onPress) return;
-    
-    setTimeout(onPress, delay);
+    if (disable || !onPress) return;
+    onPress();
   };
 
   return (

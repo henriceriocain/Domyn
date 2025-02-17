@@ -1,4 +1,4 @@
-// WorkoutRoutineScreen.tsx
+// app / auth / WorkoutRoutineScreen.tsx
 
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity, ScrollView } from 'react-native';

@@ -1,4 +1,4 @@
-// WorkoutDaysScreen.tsx
+// app / auth / WorkoutDaysScreen.tsx
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
