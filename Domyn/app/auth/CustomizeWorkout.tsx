@@ -6,15 +6,16 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  ScrollView,
+  Keyboard,
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
   Platform,
-  Keyboard,
+  ScrollView,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
 import { BouncyBox } from '../../components/BouncyBox';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { UserContextProps } from '../../contexts/UserContext';
 import type Workout from '../../models/Workout';
 
@@ -23,6 +24,21 @@ interface Exercise {
   weight: number;
   reps: number;
   sets: number;
+}
+
+function getFullDayName(abbrev: string): string {
+  const mapping: { [key: string]: string } = {
+    mon: 'Monday',
+    tues: 'Tuesday',
+    tue: 'Tuesday',
+    wed: 'Wednesday',
+    thurs: 'Thursday',
+    thu: 'Thursday',
+    fri: 'Friday',
+    sat: 'Saturday',
+    sun: 'Sunday',
+  };
+  return mapping[abbrev.toLowerCase()] || abbrev;
 }
 
 //
@@ -69,12 +85,7 @@ const WorkoutNameInput = ({
             maxLength={12}
           />
         ) : (
-          <Text
-            style={[
-              styles.workoutNameText,
-              !value && styles.placeholderText,
-            ]}
-          >
+          <Text style={[styles.workoutNameText, !value && styles.placeholderText]}>
             {value || "Enter workout name"}
           </Text>
         )}
@@ -112,48 +123,49 @@ const ExerciseItem = ({
 // Main CustomizeWorkout Component
 //
 export default function CustomizeWorkout() {
-  const { day } = useLocalSearchParams();
-  const router = useRouter();
-  const { addWorkout, getWorkout, updateWorkout } =
-    useUserContext() as UserContextProps;
-  const existingWorkout = getWorkout(day as string);
+  const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams();
+  const dayParam = params.day;
+  const dayString = Array.isArray(dayParam) ? dayParam[0] : dayParam;
 
-  // Default workout name now starts as empty
+  const router = useRouter();
+  const { addWorkout, getWorkout, updateWorkout } = useUserContext() as UserContextProps;
+  const existingWorkout = getWorkout(dayString);
+
+  // Default workout name starts empty
   const [dayName, setDayName] = useState(existingWorkout?.dayName || "");
-  const [exercises, setExercises] = useState<Exercise[]>(
-    existingWorkout?.exercise || []
-  );
+  const [exercises, setExercises] = useState<Exercise[]>(existingWorkout?.exercise || []);
 
   useEffect(() => {
     if (!existingWorkout) {
-      addWorkout(day as string);
+      addWorkout(dayString);
     }
-  }, [day]);
+  }, [dayString]);
 
   const handleDayNameChange = (name: string) => {
     setDayName(name);
-    const workout = getWorkout(day as string);
+    const workout = getWorkout(dayString);
     if (workout) {
       workout.dayName = name;
-      updateWorkout(day as string, workout);
+      updateWorkout(dayString, workout);
     }
   };
 
-  // When an exercise is tapped, navigate to the edit page with its index and day
   const handleExercisePress = (index: number) => {
     router.push({
       pathname: './editExerciseScreen',
-      params: { day, index },
+      params: { day: dayString, index },
     });
   };
 
-  // When the floating "Add Exercise" button is tapped, navigate to the add exercise page
   const handleAddExercise = () => {
     router.push({
       pathname: './addExerciseScreen',
-      params: { day },
+      params: { day: dayString },
     });
   };
+
+  const HEADER_HEIGHT = 70 + insets.top;
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -161,30 +173,39 @@ export default function CustomizeWorkout() {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingTop: HEADER_HEIGHT }]}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.content}>
-            <Text style={styles.header}>{day}'s Workout</Text>
-            <View style={styles.section}>
+            <View style={styles.nameSection}>
               <Text style={styles.subheader}>Name of Workout</Text>
-              <WorkoutNameInput
-                value={dayName}
-                onChangeText={handleDayNameChange}
-              />
+              <WorkoutNameInput value={dayName} onChangeText={handleDayNameChange} />
             </View>
-            <View style={styles.section}>
+            <View style={styles.exercisesSection}>
               <Text style={styles.subheader}>Exercises</Text>
               <View style={styles.exercisesList}>
-                {exercises.map((exercise, index) => (
-                  <ExerciseItem
-                    key={index}
-                    exercise={exercise}
-                    onPress={() => handleExercisePress(index)}
-                  />
-                ))}
+                {exercises.length === 0 ? (
+                  <Text style={styles.emptyText}>wow so empty...</Text>
+                ) : (
+                  exercises.map((exercise, index) => (
+                    <ExerciseItem
+                      key={index}
+                      exercise={exercise}
+                      onPress={() => handleExercisePress(index)}
+                    />
+                  ))
+                )}
               </View>
             </View>
           </View>
         </ScrollView>
+        {/* Sticky header with a fixed transparent dark background */}
+        <View style={[styles.stickyHeader, { height: HEADER_HEIGHT, paddingTop: insets.top }]}>
+          <Text style={styles.stickyHeaderText}>
+            {getFullDayName(dayString)}'s Workout
+          </Text>
+        </View>
         <BouncyBox containerStyle={styles.fab} onPress={handleAddExercise}>
           <View style={styles.fabIconContainer}>
             <Text style={styles.fabText}>+</Text>
@@ -201,17 +222,40 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
     position: 'relative',
   },
+  scrollContent: {
+    paddingBottom: 80, // room for FAB
+  },
   content: {
     padding: 20,
-    paddingTop: 60,
   },
-  header: {
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    zIndex: 10,
+    justifyContent: 'center',
+    alignItems: 'flex-start', // left align header text
+    paddingHorizontal: 20,
+  },
+  stickyHeaderText: {
     fontSize: 32,
     fontWeight: '700',
     color: 'white',
-    marginBottom: 30,
+    textAlign: 'left',
   },
-  section: {
+  nameSection: {
+    backgroundColor: '#262626',
+    borderRadius: 10,
+    padding: 15,
+    marginTop: 20,
+    marginBottom: 40,
+  },
+  exercisesSection: {
+    backgroundColor: '#323232',
+    borderRadius: 10,
+    padding: 15,
     marginBottom: 30,
   },
   subheader: {
@@ -220,12 +264,10 @@ const styles = StyleSheet.create({
     color: 'white',
     marginBottom: 15,
   },
-  // Fixed height container so it stays static during editing
   workoutNameContainer: {
     borderRadius: 10,
     backgroundColor: '#1a1a1a',
     height: 60,
-    marginBottom: 20,
     justifyContent: 'center',
   },
   workoutNameWrapper: {
@@ -250,6 +292,13 @@ const styles = StyleSheet.create({
   },
   exercisesList: {
     marginBottom: 20,
+  },
+  emptyText: {
+    color: 'gray',
+    fontSize: 16,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginVertical: 20,
   },
   exerciseItem: {
     backgroundColor: '#1a1a1a',
