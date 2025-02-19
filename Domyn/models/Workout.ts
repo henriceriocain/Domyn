@@ -1,5 +1,6 @@
-
+// models / Workout.ts
 // Class to create Workout Day
+
 class Workout {
   dayName: string;
   exercise: { nameOfExercise: string; weight: number; reps: number; sets: number }[];

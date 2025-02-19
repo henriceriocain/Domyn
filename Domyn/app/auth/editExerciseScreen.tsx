@@ -1,4 +1,4 @@
-// app / auth / editExerciseScreen.tsx
+// app / auth / EditExerciseScreen.tsx
 
 import React, { useState } from 'react';
 import { 
