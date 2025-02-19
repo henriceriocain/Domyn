@@ -1,16 +1,16 @@
 // app / auth / CustomizeWorkout.tsx
 
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  ScrollView, 
-  TouchableWithoutFeedback, 
-  KeyboardAvoidingView, 
-  Platform, 
-  Keyboard 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  ScrollView,
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
@@ -25,8 +25,14 @@ interface Exercise {
   sets: number;
 }
 
-const WorkoutNameInput = ({ value, onChangeText }: { 
-  value: string; 
+//
+// WorkoutNameInput Component
+//
+const WorkoutNameInput = ({
+  value,
+  onChangeText,
+}: {
+  value: string;
   onChangeText: (text: string) => void;
 }) => {
   const [editing, setEditing] = useState(false);
@@ -34,18 +40,20 @@ const WorkoutNameInput = ({ value, onChangeText }: {
 
   const handlePress = () => setEditing(true);
   const handleBlur = () => {
+    // Remove trailing spaces and enforce max 12 characters
+    const finalInput = inputValue.trimEnd().slice(0, 12);
     setEditing(false);
-    onChangeText(inputValue);
+    onChangeText(finalInput);
   };
 
   return (
-    <BouncyBox 
+    <BouncyBox
       containerStyle={styles.workoutNameContainer}
       onPress={!editing ? handlePress : undefined}
     >
       <View style={styles.workoutNameWrapper}>
         {editing ? (
-          <TextInput 
+          <TextInput
             style={styles.workoutNameInput}
             value={inputValue}
             onChangeText={setInputValue}
@@ -56,10 +64,17 @@ const WorkoutNameInput = ({ value, onChangeText }: {
             autoFocus
             returnKeyType="done"
             selectionColor="white"
-            multiline
+            multiline={false}
+            textAlignVertical="center"
+            maxLength={12}
           />
         ) : (
-          <Text style={[styles.workoutNameText, !value && styles.placeholderText]}>
+          <Text
+            style={[
+              styles.workoutNameText,
+              !value && styles.placeholderText,
+            ]}
+          >
             {value || "Enter workout name"}
           </Text>
         )}
@@ -68,9 +83,15 @@ const WorkoutNameInput = ({ value, onChangeText }: {
   );
 };
 
-const ExerciseItem = ({ exercise, onPress }: { 
-  exercise: Exercise; 
-  onPress: () => void; 
+//
+// ExerciseItem Component – displays a bouncy, read‑only exercise summary
+//
+const ExerciseItem = ({
+  exercise,
+  onPress,
+}: {
+  exercise: Exercise;
+  onPress: () => void;
 }) => {
   return (
     <BouncyBox containerStyle={styles.exerciseItem} onPress={onPress}>
@@ -81,22 +102,27 @@ const ExerciseItem = ({ exercise, onPress }: {
         <Text style={styles.exerciseDetails}>
           {exercise.weight} lbs × {exercise.reps} reps
         </Text>
-        <Text style={styles.exerciseSets}>
-          {exercise.sets} sets
-        </Text>
+        <Text style={styles.exerciseSets}>{exercise.sets} sets</Text>
       </View>
     </BouncyBox>
   );
 };
 
+//
+// Main CustomizeWorkout Component
+//
 export default function CustomizeWorkout() {
   const { day } = useLocalSearchParams();
   const router = useRouter();
-  const { addWorkout, getWorkout, updateWorkout } = useUserContext() as UserContextProps;
+  const { addWorkout, getWorkout, updateWorkout } =
+    useUserContext() as UserContextProps;
   const existingWorkout = getWorkout(day as string);
 
-  const [dayName, setDayName] = useState(existingWorkout?.dayName || (day as string));
-  const [exercises, setExercises] = useState<Exercise[]>(existingWorkout?.exercise || []);
+  // Default workout name now starts as empty
+  const [dayName, setDayName] = useState(existingWorkout?.dayName || "");
+  const [exercises, setExercises] = useState<Exercise[]>(
+    existingWorkout?.exercise || []
+  );
 
   useEffect(() => {
     if (!existingWorkout) {
@@ -113,24 +139,26 @@ export default function CustomizeWorkout() {
     }
   };
 
+  // When an exercise is tapped, navigate to the edit page with its index and day
   const handleExercisePress = (index: number) => {
     router.push({
       pathname: './editExerciseScreen',
-      params: { day, index }
+      params: { day, index },
     });
   };
 
+  // When the floating "Add Exercise" button is tapped, navigate to the add exercise page
   const handleAddExercise = () => {
     router.push({
       pathname: './addExerciseScreen',
-      params: { day }
+      params: { day },
     });
   };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView 
-        style={styles.container} 
+      <KeyboardAvoidingView
+        style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView keyboardShouldPersistTaps="handled">
@@ -138,19 +166,19 @@ export default function CustomizeWorkout() {
             <Text style={styles.header}>{day}'s Workout</Text>
             <View style={styles.section}>
               <Text style={styles.subheader}>Name of Workout</Text>
-              <WorkoutNameInput 
-                value={dayName} 
-                onChangeText={handleDayNameChange} 
+              <WorkoutNameInput
+                value={dayName}
+                onChangeText={handleDayNameChange}
               />
             </View>
             <View style={styles.section}>
               <Text style={styles.subheader}>Exercises</Text>
               <View style={styles.exercisesList}>
                 {exercises.map((exercise, index) => (
-                  <ExerciseItem 
-                    key={index} 
-                    exercise={exercise} 
-                    onPress={() => handleExercisePress(index)} 
+                  <ExerciseItem
+                    key={index}
+                    exercise={exercise}
+                    onPress={() => handleExercisePress(index)}
                   />
                 ))}
               </View>
@@ -168,86 +196,86 @@ export default function CustomizeWorkout() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     backgroundColor: 'black',
-    position: 'relative'
+    position: 'relative',
   },
-  content: { 
-    padding: 20, 
-    paddingTop: 60 
+  content: {
+    padding: 20,
+    paddingTop: 60,
   },
-  header: { 
-    fontSize: 32, 
-    fontWeight: '700', 
-    color: 'white', 
-    marginBottom: 30 
+  header: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: 30,
   },
-  section: { 
-    marginBottom: 30 
+  section: {
+    marginBottom: 30,
   },
-  subheader: { 
-    fontSize: 20, 
-    fontWeight: '600', 
-    color: 'white', 
-    marginBottom: 15 
+  subheader: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 15,
   },
-  workoutNameContainer: { 
-    borderRadius: 10, 
-    backgroundColor: '#1a1a1a', 
-    minHeight: 60, 
-    paddingVertical: 15, 
-    marginBottom: 20 
+  // Fixed height container so it stays static during editing
+  workoutNameContainer: {
+    borderRadius: 10,
+    backgroundColor: '#1a1a1a',
+    height: 60,
+    marginBottom: 20,
+    justifyContent: 'center',
   },
-  workoutNameWrapper: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    paddingHorizontal: 15 
+  workoutNameWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 15,
   },
-  workoutNameInput: { 
-    color: 'white', 
-    fontSize: 16, 
-    padding: 0, 
-    minHeight: 45, 
-    textAlignVertical: 'top' 
+  workoutNameInput: {
+    color: 'white',
+    fontSize: 16,
+    padding: 0,
+    height: '100%',
+    textAlignVertical: 'center',
   },
-  workoutNameText: { 
-    color: 'white', 
-    fontSize: 16, 
-    padding: 0, 
-    textAlignVertical: 'center' 
+  workoutNameText: {
+    color: 'white',
+    fontSize: 16,
+    textAlignVertical: 'center',
   },
-  placeholderText: { 
-    color: '#666' 
+  placeholderText: {
+    color: '#666',
   },
-  exercisesList: { 
-    marginBottom: 20 
+  exercisesList: {
+    marginBottom: 20,
   },
-  exerciseItem: { 
-    backgroundColor: '#1a1a1a', 
-    paddingVertical: 8, 
-    paddingHorizontal: 15, 
-    borderRadius: 10, 
-    marginBottom: 10 
+  exerciseItem: {
+    backgroundColor: '#1a1a1a',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    marginBottom: 10,
   },
-  exerciseContent: { 
-    flex: 1 
+  exerciseContent: {
+    flex: 1,
   },
-  exerciseItemName: { 
-    color: 'white', 
-    fontSize: 16, 
-    fontWeight: '600', 
-    marginBottom: 5 
+  exerciseItemName: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 5,
   },
-  exerciseDetails: { 
-    color: '#999', 
+  exerciseDetails: {
+    color: '#999',
     fontSize: 14,
-    marginTop: 2
+    marginTop: 2,
   },
   exerciseSets: {
     color: '#999',
     fontSize: 14,
-    marginTop: 2
+    marginTop: 2,
   },
   fab: {
     position: 'absolute',
@@ -264,7 +292,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   fabIconContainer: {
-    width: '100%', 
+    width: '100%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
