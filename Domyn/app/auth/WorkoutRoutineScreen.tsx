@@ -49,10 +49,6 @@ export default function WorkoutRoutineScreen() {
     }, [])
   );
 
-  const handleBack = () => {
-    router.push('./WorkoutDaysScreen');
-  };
-
   const handleNext = () => {
     alert('Workout routines saved!');
   };
@@ -161,13 +157,6 @@ export default function WorkoutRoutineScreen() {
         </Text>
         {selectedDays.map((day, index) => renderDaySection(day, index))}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleBack}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.backButtonText}>Back</Text>
-          </TouchableOpacity>
           {allComplete && (
             <TouchableOpacity
               style={styles.button}
@@ -221,9 +210,9 @@ const styles = StyleSheet.create({
     marginBottom: -1, // Reduced gap
   },
   dayLabel: {
-    color: 'white', // Changed to white
+    color: 'white',
     fontSize: 16,
-    fontWeight: '700', // More bold
+    fontWeight: '700',
   },
   bottomRow: {
     flexDirection: 'row',
@@ -234,7 +223,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 24,
     fontWeight: '700',
-    marginTop: 0, // Closer to day label
+    marginTop: 0,
   },
   statusBar: {
     backgroundColor: '#262626',
@@ -254,7 +243,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     marginTop: 20,
   },
   button: {
@@ -263,10 +252,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: '45%',
     alignItems: 'center',
-  },
-  backButtonText: {
-    color: 'white',
-    fontSize: 16,
   },
   nextButtonText: {
     color: 'white',
