@@ -17,7 +17,30 @@ const Layout = () => {
           gestureDirection: "horizontal",
           fullScreenGestureEnabled: true,
         }}
-      />
+      >
+        <Stack.Screen
+          name="auth/editExerciseScreen"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+            gestureDirection: 'vertical',
+            gestureEnabled: true,
+            fullScreenGestureEnabled: true,
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="auth/addExerciseScreen"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+            gestureDirection: 'vertical',
+            gestureEnabled: true,
+            fullScreenGestureEnabled: true,
+            animationDuration: 300,
+          }}
+        />
+      </Stack>
     </UserProvider>
   );
 };

@@ -1,21 +1,18 @@
 // app / auth / CustomizeWorkout.tsx
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   TextInput, 
   ScrollView, 
-  Animated, 
   TouchableWithoutFeedback, 
   KeyboardAvoidingView, 
   Platform, 
-  Keyboard,
-  Alert,
-  LayoutAnimation,
+  Keyboard 
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
 import { BouncyBox } from '../../components/BouncyBox';
 import type { UserContextProps } from '../../contexts/UserContext';
@@ -28,42 +25,27 @@ interface Exercise {
   sets: number;
 }
 
-interface CurrentExercise {
-  nameOfExercise: string;
-  weight: string;
-  reps: string;
-  sets: string;
-  isEditing: boolean;
-}
-
-const LAYOUT_ANIMATION_DURATION = 150;
-
-const WorkoutNameInput = ({ value, onChangeText, disableEditing }: { 
+const WorkoutNameInput = ({ value, onChangeText }: { 
   value: string; 
   onChangeText: (text: string) => void;
-  disableEditing: boolean;
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value);
 
-  const handlePress = () => {
-    if (disableEditing) return;
-    setIsEditing(true);
-  };
+  const handlePress = () => setEditing(true);
   const handleBlur = () => {
-    setIsEditing(false);
+    setEditing(false);
     onChangeText(inputValue);
   };
 
   return (
     <BouncyBox 
       containerStyle={styles.workoutNameContainer}
-      onPress={!isEditing && !disableEditing ? handlePress : undefined}
-      disable={disableEditing}
+      onPress={!editing ? handlePress : undefined}
     >
       <View style={styles.workoutNameWrapper}>
-        {isEditing ? (
-          <TextInput
+        {editing ? (
+          <TextInput 
             style={styles.workoutNameInput}
             value={inputValue}
             onChangeText={setInputValue}
@@ -86,191 +68,41 @@ const WorkoutNameInput = ({ value, onChangeText, disableEditing }: {
   );
 };
 
-const EditableExerciseItem = ({
-  exercise,
-  index,
-  isEditing,
-  toggleEditing,
-  handleExerciseFieldChange,
-  saveExercise
-}: {
-  exercise: Exercise;
-  index: number;
-  isEditing: boolean;
-  toggleEditing: (index: number) => void;
-  handleExerciseFieldChange: (index: number, field: keyof Exercise, value: string) => void;
-  saveExercise: (index: number) => void;
+const ExerciseItem = ({ exercise, onPress }: { 
+  exercise: Exercise; 
+  onPress: () => void; 
 }) => {
-  const animation = useRef(new Animated.Value(isEditing ? 1 : 0)).current;
-  const [localExercise, setLocalExercise] = useState({
-    nameOfExercise: exercise.nameOfExercise,
-    weight: exercise.weight.toString(),
-    reps: exercise.reps.toString(),
-    sets: exercise.sets.toString(),
-  });
-
-  useEffect(() => {
-    Animated.spring(animation, {
-      toValue: isEditing ? 1 : 0,
-      friction: 8,
-      tension: 80,
-      useNativeDriver: false,
-    }).start();
-  }, [isEditing]);
-
-  const animatedHeight = animation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [110, 160],
-  });
-
-  const animatedOpacity = animation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.9, 1],
-  });
-
-  const handleLocalChange = (field: keyof typeof localExercise, value: string) => {
-    setLocalExercise(prev => ({ ...prev, [field]: value }));
-    handleExerciseFieldChange(index, field as keyof Exercise, value);
-  };
-
-  const validateFields = () =>
-    localExercise.nameOfExercise.trim() &&
-    localExercise.weight.trim() &&
-    localExercise.reps.trim() &&
-    localExercise.sets.trim();
-
-  const handleDone = () => {
-    if (validateFields()) {
-      saveExercise(index);
-    } else {
-      Alert.alert('Validation Error', 'Please fill out all fields correctly.');
-    }
-  };
-
   return (
-    <Animated.View style={[styles.exerciseItem, { height: animatedHeight, opacity: animatedOpacity }]}>
-      <BouncyBox 
-        containerStyle={styles.exerciseContent}
-        onPress={!isEditing ? () => toggleEditing(index) : undefined}
-      >
-        {isEditing ? (
-          <View style={styles.editContainer}>
-            <TextInput
-              style={[styles.input, styles.exerciseNameInput]}
-              value={localExercise.nameOfExercise}
-              onChangeText={(text) => handleLocalChange('nameOfExercise', text)}
-              placeholder="Exercise Name"
-              placeholderTextColor="#666"
-              returnKeyType="done"
-              autoFocus
-              onSubmitEditing={handleDone}
-            />
-            <View style={styles.inputRow}>
-              <TextInput
-                style={[styles.input, styles.numberInput]}
-                value={localExercise.weight}
-                onChangeText={(text) => handleLocalChange('weight', text)}
-                keyboardType="numeric"
-                placeholder="Weight"
-                placeholderTextColor="#666"
-                returnKeyType="done"
-                onSubmitEditing={handleDone}
-              />
-              <TextInput
-                style={[styles.input, styles.numberInput]}
-                value={localExercise.reps}
-                onChangeText={(text) => handleLocalChange('reps', text)}
-                keyboardType="numeric"
-                placeholder="Reps"
-                placeholderTextColor="#666"
-                returnKeyType="done"
-                onSubmitEditing={handleDone}
-              />
-              <TextInput
-                style={[styles.input, styles.numberInput]}
-                value={localExercise.sets}
-                onChangeText={(text) => handleLocalChange('sets', text)}
-                keyboardType="numeric"
-                placeholder="Sets"
-                placeholderTextColor="#666"
-                returnKeyType="done"
-                onSubmitEditing={handleDone}
-              />
-            </View>
-          </View>
-        ) : (
-          <View style={styles.displayContainer}>
-            <Text style={styles.exerciseItemName}>{exercise.nameOfExercise}</Text>
-            <Text style={styles.exerciseDetails}>
-              {exercise.weight} lbs × {exercise.reps} reps
-            </Text>
-            <Text style={styles.exerciseDetails}>{exercise.sets} sets</Text>
-          </View>
-        )}
-      </BouncyBox>
-    </Animated.View>
+    <BouncyBox containerStyle={styles.exerciseItem} onPress={onPress}>
+      <View style={styles.exerciseContent}>
+        <Text style={styles.exerciseItemName}>
+          {exercise.nameOfExercise || "Unnamed Exercise"}
+        </Text>
+        <Text style={styles.exerciseDetails}>
+          {exercise.weight} lbs × {exercise.reps} reps
+        </Text>
+        <Text style={styles.exerciseSets}>
+          {exercise.sets} sets
+        </Text>
+      </View>
+    </BouncyBox>
   );
 };
 
 export default function CustomizeWorkout() {
   const { day } = useLocalSearchParams();
+  const router = useRouter();
   const { addWorkout, getWorkout, updateWorkout } = useUserContext() as UserContextProps;
   const existingWorkout = getWorkout(day as string);
-  
+
   const [dayName, setDayName] = useState(existingWorkout?.dayName || (day as string));
   const [exercises, setExercises] = useState<Exercise[]>(existingWorkout?.exercise || []);
-  const [currentExercise, setCurrentExercise] = useState<CurrentExercise>({
-    nameOfExercise: '',
-    weight: '',
-    sets: '',
-    reps: '',
-    isEditing: false
-  });
-  // Only one card may be open at a time.
-  const [editingExerciseIndex, setEditingExerciseIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!existingWorkout) addWorkout(day as string);
-  }, [day]);
-
-  // Use keyboardWillHide (on iOS) or keyboardDidHide (Android) with a custom, short duration animation.
-  useEffect(() => {
-    const keyboardHideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-    const listener = Keyboard.addListener(keyboardHideEvent, () => {
-      LayoutAnimation.configureNext({
-        duration: LAYOUT_ANIMATION_DURATION,
-        update: { type: LayoutAnimation.Types.easeInEaseOut }
-      });
-      setEditingExerciseIndex(null);
-    });
-    return () => listener.remove();
-  }, []);
-
-  const handleOutsideTap = () => {
-    Keyboard.dismiss();
-    LayoutAnimation.configureNext({
-      duration: LAYOUT_ANIMATION_DURATION,
-      update: { type: LayoutAnimation.Types.easeInEaseOut }
-    });
-    if (editingExerciseIndex !== null) {
-      const exercise = exercises[editingExerciseIndex];
-      if (
-        exercise.nameOfExercise.trim() &&
-        exercise.weight > 0 &&
-        exercise.reps > 0 &&
-        exercise.sets > 0
-      ) {
-        const workout = getWorkout(day as string);
-        if (workout) {
-          workout.exercise[editingExerciseIndex] = exercise;
-          updateWorkout(day as string, workout);
-          setEditingExerciseIndex(null);
-        }
-      } else {
-        Alert.alert('Validation Error', `Please complete all fields for exercise "${exercise.nameOfExercise || 'Unnamed Exercise'}".`);
-      }
+    if (!existingWorkout) {
+      addWorkout(day as string);
     }
-  };
+  }, [day]);
 
   const handleDayNameChange = (name: string) => {
     setDayName(name);
@@ -281,198 +113,168 @@ export default function CustomizeWorkout() {
     }
   };
 
-  const checkAndAddExercise = () => {
-    if (
-      currentExercise.nameOfExercise.trim() &&
-      currentExercise.weight.trim() &&
-      currentExercise.sets.trim() &&
-      currentExercise.reps.trim()
-    ) {
-      const workout = getWorkout(day as string);
-      if (workout) {
-        workout.addExercise(
-          currentExercise.nameOfExercise,
-          parseInt(currentExercise.weight),
-          parseInt(currentExercise.reps),
-          parseInt(currentExercise.sets)
-        );
-        setExercises([...workout.exercise]);
-        setCurrentExercise({ nameOfExercise: '', weight: '', sets: '', reps: '', isEditing: false });
-        updateWorkout(day as string, workout);
-      }
-    }
-  };
-
-  const handleExerciseChange = (field: keyof Omit<CurrentExercise, 'isEditing'>, value: string) =>
-    setCurrentExercise(prev => ({ ...prev, [field]: value }));
-
-  // When tapping on a card:
-  // • If no card is open, open the tapped card.
-  // • If the tapped card is already open, collapse it.
-  // • If a different card is open, first collapse it (using our custom animation) then open the new card.
-  const toggleEditingExercise = (index: number) => {
-    if (editingExerciseIndex === index) {
-      LayoutAnimation.configureNext({
-        duration: LAYOUT_ANIMATION_DURATION,
-        update: { type: LayoutAnimation.Types.easeInEaseOut }
-      });
-      setEditingExerciseIndex(null);
-    } else if (editingExerciseIndex !== null && editingExerciseIndex !== index) {
-      // Collapse currently open card.
-      LayoutAnimation.configureNext({
-        duration: LAYOUT_ANIMATION_DURATION,
-        update: { type: LayoutAnimation.Types.easeInEaseOut }
-      });
-      setEditingExerciseIndex(null);
-      // After the collapse animation, open the tapped card.
-      setTimeout(() => {
-        LayoutAnimation.configureNext({
-          duration: LAYOUT_ANIMATION_DURATION,
-          update: { type: LayoutAnimation.Types.easeInEaseOut }
-        });
-        setEditingExerciseIndex(index);
-      }, LAYOUT_ANIMATION_DURATION);
-    } else {
-      LayoutAnimation.configureNext({
-        duration: LAYOUT_ANIMATION_DURATION,
-        update: { type: LayoutAnimation.Types.easeInEaseOut }
-      });
-      setEditingExerciseIndex(index);
-    }
-  };
-
-  const handleExerciseFieldChange = (index: number, field: keyof Exercise, value: string) => {
-    setExercises(prev => {
-      const updated = [...prev];
-      updated[index] = {
-        ...updated[index],
-        [field]: (field === 'weight' || field === 'reps' || field === 'sets')
-          ? (parseInt(value) || 0)
-          : value,
-      };
-      return updated;
+  const handleExercisePress = (index: number) => {
+    router.push({
+      pathname: './editExerciseScreen',
+      params: { day, index }
     });
   };
 
-  const saveExercise = (index: number) => {
-    const workout = getWorkout(day as string);
-    if (workout) {
-      workout.exercise[index] = exercises[index];
-      updateWorkout(day as string, workout);
-    }
-    LayoutAnimation.configureNext({
-      duration: LAYOUT_ANIMATION_DURATION,
-      update: { type: LayoutAnimation.Types.easeInEaseOut }
+  const handleAddExercise = () => {
+    router.push({
+      pathname: './addExerciseScreen',
+      params: { day }
     });
-    setEditingExerciseIndex(null);
-    Keyboard.dismiss();
   };
 
   return (
-    <TouchableWithoutFeedback onPress={handleOutsideTap}>
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <ScrollView keyboardShouldPersistTaps="handled">
           <View style={styles.content}>
             <Text style={styles.header}>{day}'s Workout</Text>
             <View style={styles.section}>
               <Text style={styles.subheader}>Name of Workout</Text>
-              {/* Disable workout name editing if any exercise card is open */}
               <WorkoutNameInput 
                 value={dayName} 
                 onChangeText={handleDayNameChange} 
-                disableEditing={editingExerciseIndex !== null} 
               />
             </View>
             <View style={styles.section}>
               <Text style={styles.subheader}>Exercises</Text>
               <View style={styles.exercisesList}>
-                {exercises.map((item, index) => (
-                  <EditableExerciseItem 
+                {exercises.map((exercise, index) => (
+                  <ExerciseItem 
                     key={index} 
-                    exercise={item} 
-                    index={index}
-                    isEditing={editingExerciseIndex === index}
-                    toggleEditing={toggleEditingExercise}
-                    handleExerciseFieldChange={handleExerciseFieldChange}
-                    saveExercise={saveExercise}
+                    exercise={exercise} 
+                    onPress={() => handleExercisePress(index)} 
                   />
                 ))}
-              </View>
-              <View style={styles.exerciseInputWrapper}>
-                <BouncyBox containerStyle={styles.exerciseInputContainer}>
-                  <TextInput
-                    style={[styles.input, styles.exerciseNameInput]}
-                    placeholder="Exercise Name"
-                    placeholderTextColor="#666"
-                    value={currentExercise.nameOfExercise}
-                    onChangeText={(value) => handleExerciseChange('nameOfExercise', value)}
-                    onBlur={checkAndAddExercise}
-                    returnKeyType="next"
-                  />
-                  <View style={styles.inputRow}>
-                    <TextInput
-                      style={[styles.input, styles.numberInput]}
-                      placeholder="Weight"
-                      placeholderTextColor="#666"
-                      value={currentExercise.weight}
-                      onChangeText={(value) => handleExerciseChange('weight', value)}
-                      onBlur={checkAndAddExercise}
-                      keyboardType="numeric"
-                      returnKeyType="next"
-                    />
-                    <TextInput
-                      style={[styles.input, styles.numberInput]}
-                      placeholder="Reps"
-                      placeholderTextColor="#666"
-                      value={currentExercise.reps}
-                      onChangeText={(value) => handleExerciseChange('reps', value)}
-                      onBlur={checkAndAddExercise}
-                      keyboardType="numeric"
-                      returnKeyType="next"
-                    />
-                    <TextInput
-                      style={[styles.input, styles.numberInput]}
-                      placeholder="Sets"
-                      placeholderTextColor="#666"
-                      value={currentExercise.sets}
-                      onChangeText={(value) => handleExerciseChange('sets', value)}
-                      onBlur={checkAndAddExercise}
-                      keyboardType="numeric"
-                      returnKeyType="done"
-                    />
-                  </View>
-                </BouncyBox>
               </View>
             </View>
           </View>
         </ScrollView>
+        <BouncyBox containerStyle={styles.fab} onPress={handleAddExercise}>
+          <View style={styles.fabIconContainer}>
+            <Text style={styles.fabText}>+</Text>
+          </View>
+        </BouncyBox>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'black' },
-  content: { padding: 20, paddingTop: 60 },
-  header: { fontSize: 32, fontWeight: '700', color: 'white', marginBottom: 30 },
-  section: { marginBottom: 30 },
-  subheader: { fontSize: 20, fontWeight: '600', color: 'white', marginBottom: 15 },
-  workoutNameContainer: { borderRadius: 10, backgroundColor: '#1a1a1a', minHeight: 60, paddingVertical: 15, marginBottom: 20 },
-  workoutNameWrapper: { flex: 1, justifyContent: 'center', paddingHorizontal: 15 },
-  workoutNameInput: { color: 'white', fontSize: 16, padding: 0, minHeight: 45, textAlignVertical: 'top' },
-  workoutNameText: { color: 'white', fontSize: 16, padding: 0, textAlignVertical: 'center' },
-  placeholderText: { color: '#666' },
-  input: { color: 'white', padding: 10, borderRadius: 5, backgroundColor: '#262626', fontSize: 16 },
-  exerciseNameInput: { fontSize: 16, height: 45, flex: 1, marginBottom: 10, color: 'white' },
-  exercisesList: { marginBottom: 20 },
-  exerciseInputWrapper: { marginBottom: 30 },
-  exerciseInputContainer: { backgroundColor: '#1a1a1a', padding: 15, borderRadius: 10 },
-  inputRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: 10 },
-  numberInput: { flex: 1, fontSize: 16, backgroundColor: '#262626', borderRadius: 10, height: 50, paddingHorizontal: 10, color: 'white' },
-  exerciseItem: { backgroundColor: '#1a1a1a', padding: 15, borderRadius: 10, marginBottom: 15, overflow: 'hidden' },
-  exerciseContent: { flex: 1 },
-  exerciseItemName: { color: 'white', fontSize: 16, fontWeight: '600', marginBottom: 5 },
-  exerciseDetails: { color: '#999', fontSize: 14, marginBottom: 3 },
-  editContainer: { flex: 1 },
-  displayContainer: { paddingVertical: 5 },
+  container: { 
+    flex: 1, 
+    backgroundColor: 'black',
+    position: 'relative'
+  },
+  content: { 
+    padding: 20, 
+    paddingTop: 60 
+  },
+  header: { 
+    fontSize: 32, 
+    fontWeight: '700', 
+    color: 'white', 
+    marginBottom: 30 
+  },
+  section: { 
+    marginBottom: 30 
+  },
+  subheader: { 
+    fontSize: 20, 
+    fontWeight: '600', 
+    color: 'white', 
+    marginBottom: 15 
+  },
+  workoutNameContainer: { 
+    borderRadius: 10, 
+    backgroundColor: '#1a1a1a', 
+    minHeight: 60, 
+    paddingVertical: 15, 
+    marginBottom: 20 
+  },
+  workoutNameWrapper: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    paddingHorizontal: 15 
+  },
+  workoutNameInput: { 
+    color: 'white', 
+    fontSize: 16, 
+    padding: 0, 
+    minHeight: 45, 
+    textAlignVertical: 'top' 
+  },
+  workoutNameText: { 
+    color: 'white', 
+    fontSize: 16, 
+    padding: 0, 
+    textAlignVertical: 'center' 
+  },
+  placeholderText: { 
+    color: '#666' 
+  },
+  exercisesList: { 
+    marginBottom: 20 
+  },
+  exerciseItem: { 
+    backgroundColor: '#1a1a1a', 
+    paddingVertical: 8, 
+    paddingHorizontal: 15, 
+    borderRadius: 10, 
+    marginBottom: 10 
+  },
+  exerciseContent: { 
+    flex: 1 
+  },
+  exerciseItemName: { 
+    color: 'white', 
+    fontSize: 16, 
+    fontWeight: '600', 
+    marginBottom: 5 
+  },
+  exerciseDetails: { 
+    color: '#999', 
+    fontSize: 14,
+    marginTop: 2
+  },
+  exerciseSets: {
+    color: '#999',
+    fontSize: 14,
+    marginTop: 2
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+    backgroundColor: 'white',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  fabIconContainer: {
+    width: '100%', 
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fabText: {
+    fontSize: 32,
+    color: 'black',
+    fontWeight: '400',
+    includeFontPadding: false,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+  },
 });
