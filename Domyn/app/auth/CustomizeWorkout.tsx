@@ -5,7 +5,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   Keyboard,
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
@@ -14,10 +13,11 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
-import { BouncyBox } from '../../components/BouncyBox';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { UserContextProps } from '../../contexts/UserContext';
 import type Workout from '../../models/Workout';
+import { BouncyBoxTextInput } from '../../components/BouncyBoxTextInput';
+import { BouncyBox } from '../../components/BouncyBox';
 
 interface Exercise {
   nameOfExercise: string;
@@ -40,53 +40,6 @@ function getFullDayName(abbrev: string): string {
   };
   return mapping[abbrev.toLowerCase()] || abbrev;
 }
-
-const WorkoutNameInput = ({
-  value,
-  onChangeText,
-}: {
-  value: string;
-  onChangeText: (text: string) => void;
-}) => {
-  const [editing, setEditing] = useState(false);
-  const [inputValue, setInputValue] = useState(value);
-  const handlePress = () => setEditing(true);
-  const handleBlur = () => {
-    const finalInput = inputValue.trimEnd().slice(0, 12);
-    setEditing(false);
-    onChangeText(finalInput);
-  };
-  return (
-    <BouncyBox
-      containerStyle={styles.workoutNameContainer}
-      onPress={!editing ? handlePress : undefined}
-    >
-      <View style={styles.workoutNameWrapper}>
-        {editing ? (
-          <TextInput
-            style={styles.workoutNameInput}
-            value={inputValue}
-            onChangeText={setInputValue}
-            onBlur={handleBlur}
-            onSubmitEditing={handleBlur}
-            placeholder="Enter workout name"
-            placeholderTextColor="#666"
-            autoFocus
-            returnKeyType="done"
-            selectionColor="white"
-            multiline={false}
-            textAlignVertical="center"
-            maxLength={12}
-          />
-        ) : (
-          <Text style={[styles.workoutNameText, !value && styles.placeholderText]}>
-            {value || "Enter workout name"}
-          </Text>
-        )}
-      </View>
-    </BouncyBox>
-  );
-};
 
 const ExerciseItem = ({ exercise, onPress }: { exercise: Exercise; onPress: () => void; }) => {
   return (
@@ -138,19 +91,32 @@ export default function CustomizeWorkout() {
     router.push({ pathname: './addExerciseScreen', params: { day: dayString } });
   };
 
-  const HEADER_HEIGHT = 70 + insets.top;
-
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: HEADER_HEIGHT }]} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.contentContainer} 
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.header}>Customize Workout</Text>
+          <Text style={styles.subheader}>Design your perfect {getFullDayName(dayString)} routine.</Text>
+
           <View style={styles.content}>
             <View style={styles.nameSection}>
-              <Text style={styles.subheader}>Name of Workout</Text>
-              <WorkoutNameInput value={dayName} onChangeText={handleDayNameChange} />
+              <Text style={styles.sectionTitle}>Name of Workout</Text>
+              <BouncyBoxTextInput
+                value={dayName}
+                onChangeText={handleDayNameChange}
+                placeholder="Enter workout name"
+                width="100%"
+              />
             </View>
+            
             <View style={styles.exercisesSection}>
-              <Text style={styles.subheader}>Exercises</Text>
+              <Text style={styles.sectionTitle}>Exercises</Text>
               <View style={styles.exercisesList}>
                 {exercises.length === 0 ? (
                   <Text style={styles.emptyText}>wow so empty...</Text>
@@ -167,41 +133,126 @@ export default function CustomizeWorkout() {
             </View>
           </View>
         </ScrollView>
-        <View style={[styles.stickyHeader, { height: HEADER_HEIGHT, paddingTop: insets.top }]}>
-          <Text style={styles.stickyHeaderText}>{getFullDayName(dayString)}'s Workout</Text>
-        </View>
-        <BouncyBox containerStyle={styles.fab} onPress={handleAddExercise}>
-          <View style={styles.fabIconContainer}>
-            <Text style={styles.fabText}>+</Text>
+
+        <TouchableWithoutFeedback onPress={handleAddExercise}>
+          <View style={styles.fab}>
+            <View style={styles.fabInner}>
+              <Text style={styles.fabIcon}>+</Text>
+            </View>
           </View>
-        </BouncyBox>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'black', position: 'relative' },
-  scrollContent: { paddingBottom: 80 },
-  content: { padding: 20 },
-  stickyHeader: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 10, justifyContent: 'center', alignItems: 'flex-start', paddingHorizontal: 20 },
-  stickyHeaderText: { fontSize: 32, fontWeight: '700', color: 'white', textAlign: 'left' },
-  nameSection: { backgroundColor: '#262626', borderRadius: 10, padding: 15, marginTop: 20, marginBottom: 40 },
-  exercisesSection: { backgroundColor: '#323232', borderRadius: 10, padding: 15, marginBottom: 30 },
-  subheader: { fontSize: 20, fontWeight: '600', color: 'white', marginBottom: 15 },
-  workoutNameContainer: { borderRadius: 10, backgroundColor: '#1a1a1a', height: 60, justifyContent: 'center' },
-  workoutNameWrapper: { flex: 1, justifyContent: 'center', paddingHorizontal: 15 },
-  workoutNameInput: { color: 'white', fontSize: 16, padding: 0, height: '100%', textAlignVertical: 'center' },
-  workoutNameText: { color: 'white', fontSize: 16, textAlignVertical: 'center' },
-  placeholderText: { color: '#666' },
-  exercisesList: { marginBottom: 20 },
-  emptyText: { color: 'gray', fontSize: 16, fontStyle: 'italic', textAlign: 'center', marginVertical: 20 },
-  exerciseItem: { backgroundColor: '#1a1a1a', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 10, marginBottom: 10 },
-  exerciseContent: { flex: 1 },
-  exerciseItemName: { color: 'white', fontSize: 16, fontWeight: '600', marginBottom: 5 },
-  exerciseDetails: { color: '#999', fontSize: 14, marginTop: 2 },
-  exerciseSets: { color: '#999', fontSize: 14, marginTop: 2 },
-  fab: { position: 'absolute', bottom: 30, right: 30, backgroundColor: 'white', width: 60, height: 60, borderRadius: 30, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3, elevation: 5 },
-  fabIconContainer: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
-  fabText: { fontSize: 32, color: 'black', fontWeight: '400', includeFontPadding: false, textAlign: 'center', textAlignVertical: 'center' },
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  contentContainer: {
+    padding: 20,
+    paddingTop: 60,
+  },
+  header: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: 10,
+    textAlign: 'left',
+    width: '100%',
+  },
+  subheader: {
+    fontSize: 18,
+    color: 'white',
+    marginBottom: 30,
+    textAlign: 'left',
+    width: '100%',
+  },
+  content: {
+    marginTop: 20,
+  },
+  nameSection: {
+    backgroundColor: '#404040',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 30,
+  },
+  exercisesSection: {
+    backgroundColor: '#323232',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 15,
+  },
+  exercisesList: {
+    marginBottom: 20,
+  },
+  emptyText: {
+    color: 'gray',
+    fontSize: 16,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginVertical: 20,
+  },
+  exerciseItem: {
+    backgroundColor: '#1a1a1a',
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  exerciseContent: {
+    flex: 1,
+  },
+  exerciseItemName: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  exerciseDetails: {
+    color: '#999',
+    fontSize: 14,
+    marginTop: 2,
+  },
+  exerciseSets: {
+    color: '#999',
+    fontSize: 14,
+    marginTop: 2,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'white',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.30,
+    shadowRadius: 4.65,
+  },
+  fabInner: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fabIcon: {
+    color: '#2E3140',
+    fontSize: 32,
+    fontWeight: '400',
+    marginTop: -2, // Optical alignment
+  },
 });
