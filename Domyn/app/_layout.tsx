@@ -17,7 +17,9 @@ const Layout = () => {
           gestureDirection: "horizontal",
           fullScreenGestureEnabled: true,
         }}
+        initialRouteName="auth/WelcomeScreen"
       >
+        <Stack.Screen name="auth/WelcomeScreen" />
         <Stack.Screen
           name="auth/EditExerciseScreen"
           options={{

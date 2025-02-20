@@ -12,9 +12,9 @@ export default function AllSetUpScreen() {
       <Text style={styles.subheader}>Let's take a peek at your new home.</Text>
       <TouchableOpacity
         style={styles.domainButton}
-        onPress={() => router.push("/home/centralHome")}
+        onPress={() => router.push("./LoginScreen")}
       >
-        <Text style={styles.domainButtonText}>Enter Your Domain</Text>
+        <Text style={styles.domainButtonText}>Login</Text>
       </TouchableOpacity>
     </View>
   );

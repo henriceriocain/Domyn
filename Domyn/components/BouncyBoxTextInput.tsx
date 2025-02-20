@@ -55,9 +55,13 @@ export const BouncyBoxTextInput: React.FC<BouncyBoxTextInputProps> = ({
   };
 
   // When not editing and secureTextEntry is true, mask the text.
-  const displayText = secureTextEntry && !editing
-    ? '•'.repeat(inputValue.length)
-    : (value || placeholder);
+  // If no text exists, show the placeholder.
+  const displayText =
+    secureTextEntry && !editing
+      ? inputValue.length > 0
+        ? '•'.repeat(inputValue.length)
+        : placeholder
+      : (value || placeholder);
 
   return (
     // Wrap in a view that always returns true for responder and stops propagation.
