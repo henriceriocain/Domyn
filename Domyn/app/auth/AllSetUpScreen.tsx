@@ -28,15 +28,15 @@ const styles = StyleSheet.create({
     backgroundColor: "black",
   },
   header: {
-    fontSize: 32,
-    fontWeight: "600",
+    fontSize: 40,
+    fontWeight: "700",
     color: "white",
     marginBottom: 10,
   },
   subheader: {
-    fontSize: 20,
+    fontSize: 18,
     color: "white",
-    marginBottom: 40,
+    marginBottom: 30,
   },
   domainButton: {
     backgroundColor: "white",

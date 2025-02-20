@@ -155,7 +155,7 @@ export default function WorkoutRoutineScreen() {
               onPress={handleNext}
               activeOpacity={0.7}
             >
-              <Text style={styles.nextButtonTextActive}>Next</Text>
+              <Text style={styles.nextButtonTextActive}>Finish</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -249,7 +249,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingVertical: 12,
     paddingHorizontal: 30,
-    width: 100,
   },
   nextButtonActive: {
     backgroundColor: 'white',
