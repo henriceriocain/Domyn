@@ -1,4 +1,4 @@
-// app /  auth / AllSetUpScreen.tsx
+// app / auth / AllSetUpScreen.tsx
 
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
