@@ -7,7 +7,9 @@ import {
   StyleSheet, 
   Animated, 
   TouchableOpacity, 
-  ScrollView 
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -23,7 +25,6 @@ export default function WorkoutRoutineScreen() {
   const router = useRouter();
   const { selectedDays, getWorkout } = useUserContext();
 
-  // Check if every selected day is "complete" (has a non‑empty dayName and at least one exercise)
   const allComplete = selectedDays.every(day => {
     const workout = getWorkout(day);
     return (
@@ -64,7 +65,6 @@ export default function WorkoutRoutineScreen() {
           );
         }
       }
-      // Instead of alerting, transition to the AllSetUpScreen.
       router.push("/auth/AllSetUpScreen");
     } catch (error) {
       console.error("Error saving workout routines:", error);
@@ -135,26 +135,59 @@ export default function WorkoutRoutineScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-      <View style={styles.container}>
-        <Text style={styles.header}>What are your workout routines on these days?</Text>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.contentContainer} 
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.header}>Plan Your Workouts</Text>
+        <Text style={styles.subheader}>Customize each day's routine to match your goals.</Text>
+        
         {selectedDays.map((day, index) => renderDaySection(day, index))}
-        <View style={styles.buttonContainer}>
+        
+        <View style={styles.nextButtonContainer}>
           {allComplete && (
-            <TouchableOpacity style={styles.button} onPress={handleNext} activeOpacity={0.7}>
-              <Text style={styles.nextButtonText}>Next</Text>
+            <TouchableOpacity
+              style={[styles.nextButton, styles.nextButtonActive]}
+              onPress={handleNext}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.nextButtonTextActive}>Next</Text>
             </TouchableOpacity>
           )}
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'black', padding: 20 },
-  scrollContainer: { flexGrow: 1 },
-  header: { fontSize: 40, fontWeight: '700', color: 'white', paddingTop: 60, paddingBottom: 60 },
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  contentContainer: {
+    padding: 20,
+    paddingTop: 60,
+  },
+  header: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: 10,
+    textAlign: 'left',
+    width: '100%',
+  },
+  subheader: {
+    fontSize: 18,
+    color: 'white',
+    marginBottom: 30,
+    textAlign: 'left',
+    width: '100%',
+  },
   daySection: {
     backgroundColor: '#1a1a1a',
     borderRadius: 15,
@@ -165,15 +198,66 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  daySectionContent: { padding: 20 },
-  dayLabelContainer: { backgroundColor: '#333', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 5, alignSelf: 'flex-start', marginBottom: -1 },
-  dayLabel: { color: 'white', fontSize: 16, fontWeight: '700' },
-  bottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  customNameText: { color: 'white', fontSize: 24, fontWeight: '700' },
-  statusBar: { backgroundColor: '#262626', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, alignSelf: 'flex-end' },
-  statusText: { fontSize: 16, color: '#666' },
-  completeText: { color: '#4CD964', fontSize: 20, fontWeight: '700' },
-  buttonContainer: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 20 },
-  button: { backgroundColor: '#333', padding: 15, borderRadius: 10, width: '45%', alignItems: 'center' },
-  nextButtonText: { color: 'white', fontSize: 16 },
+  daySectionContent: { 
+    padding: 20 
+  },
+  dayLabelContainer: {
+    backgroundColor: '#333',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 5,
+    alignSelf: 'flex-start',
+    marginBottom: -1
+  },
+  dayLabel: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700'
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  customNameText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: '700'
+  },
+  statusBar: {
+    backgroundColor: '#262626',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignSelf: 'flex-end'
+  },
+  statusText: {
+    fontSize: 16,
+    color: '#666'
+  },
+  completeText: {
+    color: '#4CD964',
+    fontSize: 20,
+    fontWeight: '700'
+  },
+  nextButtonContainer: {
+    width: '100%',
+    alignItems: 'flex-end',
+    marginTop: 30,
+  },
+  nextButton: {
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    width: 100,
+  },
+  nextButtonActive: {
+    backgroundColor: 'white',
+  },
+  nextButtonTextActive: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2E3140',
+    textAlign: 'center',
+  },
 });
