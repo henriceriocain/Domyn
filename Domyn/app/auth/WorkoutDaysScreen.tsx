@@ -1,13 +1,21 @@
 // app / auth / WorkoutDaysScreen.tsx
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
 import { auth, db } from '../../firebase/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
-// Updated type with full weekday names.
 type Days = {
   Monday: boolean;
   Tuesday: boolean;
@@ -22,7 +30,6 @@ export default function WorkoutDaysScreen() {
   const router = useRouter();
   const { name, setSelectedDays, addWorkout } = useUserContext();
 
-  // Initialize full weekday names (all false).
   const [days, setDays] = useState<Days>({
     Monday: false,
     Tuesday: false,
@@ -37,11 +44,10 @@ export default function WorkoutDaysScreen() {
     setDays((prevDays) => ({ ...prevDays, [day]: !prevDays[day] }));
   };
 
-  // Save selected days to UserContext and persist to Firestore.
   const handleNext = async () => {
     const selectedDays = Object.keys(days).filter((day) => days[day as keyof Days]);
     if (selectedDays.length > 0) {
-      setSelectedDays(selectedDays); // Save to UserContext
+      setSelectedDays(selectedDays);
       const currentUser = auth.currentUser;
       if (!currentUser) {
         Alert.alert("Error", "User not authenticated.");
@@ -54,8 +60,8 @@ export default function WorkoutDaysScreen() {
             dayDocRef,
             {
               day,
-              workoutName: null, // Default value; will be updated later.
-              exercises: [],     // Initially empty.
+              workoutName: null,
+              exercises: [],
               createdAt: serverTimestamp(),
             },
             { merge: true }
@@ -72,40 +78,52 @@ export default function WorkoutDaysScreen() {
     }
   };
 
-  const handleBack = () => {
-    router.push('./PersonalDetailsScreen');
-  };
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>
-        Welcome, <Text style={styles.name}>{name}</Text>!
-      </Text>
-      <Text style={styles.subheader}>When Do You Usually Workout?</Text>
-      <View style={styles.daysContainer}>
-        {Object.keys(days).map((day) => (
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        <Text style={styles.header}>What's Your Routine?</Text>
+        <Text style={styles.subheader}>Select the days you plan to workout.</Text>
+        
+        <View style={styles.daysContainer}>
+          {Object.keys(days).map((day) => (
+            <TouchableOpacity
+              key={day}
+              style={[styles.dayBox, days[day as keyof Days] && styles.daySelected]}
+              onPress={() => handleDayPress(day as keyof Days)}
+            >
+              <Text style={styles.dayBoxText}>{day}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.nextButtonContainer}>
           <TouchableOpacity
-            key={day}
-            style={[styles.dayBox, days[day as keyof Days] && styles.daySelected]}
-            onPress={() => handleDayPress(day as keyof Days)}
+            style={[
+              styles.nextButton,
+              Object.values(days).some((val) => val) 
+                ? styles.nextButtonActive 
+                : styles.nextButtonDisabled,
+            ]}
+            onPress={handleNext}
+            disabled={!Object.values(days).some((val) => val)}
           >
-            <Text style={styles.dayBoxText}>{day}</Text>
+            <Text 
+              style={[
+                styles.nextButtonText,
+                Object.values(days).some((val) => val) 
+                  ? styles.nextButtonTextActive 
+                  : styles.nextButtonTextDisabled,
+              ]}
+            >
+              Next
+            </Text>
           </TouchableOpacity>
-        ))}
-      </View>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[
-            styles.button,
-            { backgroundColor: Object.values(days).some((val) => val) ? 'white' : 'gray' },
-          ]}
-          onPress={handleNext}
-          disabled={!Object.values(days).some((val) => val)}
-        >
-          <Text style={styles.nextButtonText}>Next</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -113,24 +131,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',
+  },
+  contentContainer: {
     padding: 20,
+    paddingTop: 60,
   },
   header: {
     fontSize: 40,
     fontWeight: '700',
     color: 'white',
-    paddingTop: 60,
-    paddingBottom: 60,
-  },
-  name: {
-    fontWeight: '800',
-    color: 'white',
+    marginBottom: 10,
+    textAlign: 'left',
+    width: '100%',
   },
   subheader: {
-    fontSize: 26,
-    fontWeight: '600',
+    fontSize: 18,
     color: 'white',
-    marginBottom: 20,
+    marginBottom: 30,
+    textAlign: 'left',
+    width: '100%',
   },
   daysContainer: {
     marginTop: 10,
@@ -154,23 +173,32 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
   },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    paddingHorizontal: 10,
-    marginTop: 40,
+  nextButtonContainer: {
+    width: '100%',
+    alignItems: 'flex-end',
+    marginTop: 30,
   },
-  button: {
-    borderRadius: 30,
-    paddingVertical: 15,
-    width: "30%",
-    alignItems: "center",
-    alignSelf: 'flex-end',
+  nextButton: {
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    width: 100,
+  },
+  nextButtonActive: {
+    backgroundColor: 'white',
+  },
+  nextButtonDisabled: {
+    backgroundColor: '#444',
   },
   nextButtonText: {
-    color: "black",
     fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  nextButtonTextActive: {
+    color: '#2E3140',
+  },
+  nextButtonTextDisabled: {
+    color: '#888',
   },
 });

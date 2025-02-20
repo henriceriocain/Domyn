@@ -73,7 +73,7 @@ export default function PersonalDetailsScreen() {
       keyboardVerticalOffset={5}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView keyboardShouldPersistTaps="always" contentContainerStyle={styles.contentContainer}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.contentContainer}>
           <Text style={styles.header}>Let's Get To Know Each Other...</Text>
           <Text style={styles.subheader}>Tell Us About Yourself.</Text>
           
