@@ -1,11 +1,11 @@
 // app / auth / PersonalDetailsScreen.tsx
-import React, { useContext, useState, useEffect } from 'react';
+
+import React, { useContext, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   KeyboardAvoidingView,
   ScrollView,
   Platform,
@@ -14,27 +14,25 @@ import {
   Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { UserContext } from '../../contexts/UserContext'; // If you're still using it for local state
+import { UserContext } from '../../contexts/UserContext';
 import { auth, db } from '../../firebase/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { BouncyBoxTextInput } from '../../components/BouncyBoxTextInput';
 
 export default function PersonalDetailsScreen() {
   const router = useRouter();
   const userContext = useContext(UserContext);
 
-  // Fallback local state in case context isn't used; you might later synchronize these with Firestore.
   const [name, setName] = useState(userContext?.name || '');
   const [age, setAge] = useState(userContext?.age || '');
   const [gender, setGender] = useState(userContext?.gender || '');
   const [weight, setWeight] = useState(userContext?.weight || '');
 
-  // Check if all fields are filled
   const allFieldsFilled = name.trim() && age.trim() && gender.trim() && weight.trim();
 
   const handleNextPress = async () => {
     if (!allFieldsFilled) return;
 
-    // Get the currently signed-in user's UID
     const currentUser = auth.currentUser;
     if (!currentUser) {
       Alert.alert("Error", "User not authenticated. Please log in again.");
@@ -42,7 +40,6 @@ export default function PersonalDetailsScreen() {
     }
 
     try {
-      // Create or update the user's Firestore document.
       const userDocRef = doc(db, "users", currentUser.uid);
       await setDoc(userDocRef, {
         personalData: {
@@ -55,7 +52,6 @@ export default function PersonalDetailsScreen() {
         updatedAt: serverTimestamp(),
       }, { merge: true });
 
-      // Optionally update your UserContext if needed
       if (userContext) {
         userContext.setName(name);
         userContext.setAge(age);
@@ -70,10 +66,6 @@ export default function PersonalDetailsScreen() {
     }
   };
 
-  const handleBackPress = () => {
-    router.push("./WelcomeScreen");
-  };
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -81,58 +73,69 @@ export default function PersonalDetailsScreen() {
       keyboardVerticalOffset={5}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView keyboardShouldPersistTaps="always" contentContainerStyle={styles.contentContainer}>
           <Text style={styles.header}>Let's Get To Know Each Other...</Text>
-          <View style={styles.form}>
-            {/* First Name */}
-            <Text style={styles.subheadings}>First Name</Text>
-            <TextInput
-              style={styles.userInput}
-              placeholder="What's your first name?"
-              placeholderTextColor="gray"
+          <Text style={styles.subheader}>Tell Us About Yourself.</Text>
+          
+          <View style={styles.fieldContainer}>
+            <Text style={styles.fieldLabel}>First Name</Text>
+            <BouncyBoxTextInput
               value={name}
               onChangeText={setName}
-            />
-            {/* Age */}
-            <Text style={styles.subheadings}>Age</Text>
-            <TextInput
-              style={styles.userInput2}
-              placeholder="How old are you?"
-              placeholderTextColor="gray"
-              value={age}
-              onChangeText={setAge}
-              keyboardType="numeric"
-            />
-            {/* Gender */}
-            <Text style={styles.subheadings}>Gender</Text>
-            <TextInput
-              style={styles.userInput3}
-              placeholder="What's your gender?"
-              placeholderTextColor="gray"
-              value={gender}
-              onChangeText={setGender}
-            />
-            {/* Weight */}
-            <Text style={styles.subheadings}>Weight</Text>
-            <TextInput
-              style={styles.userInput4}
-              placeholder="What's your weight (lbs)?"
-              placeholderTextColor="gray"
-              value={weight}
-              onChangeText={setWeight}
-              keyboardType="numeric"
+              placeholder="What's your first name?"
+              width="65%"
             />
           </View>
-          <View style={styles.buttonContainer}>
+
+          <View style={styles.fieldContainer}>
+            <Text style={styles.fieldLabel}>Age</Text>
+            <BouncyBoxTextInput
+              value={age}
+              onChangeText={setAge}
+              placeholder="How old are you?"
+              keyboardType="numeric"
+              width="50%"
+            />
+          </View>
+
+          <View style={styles.fieldContainer}>
+            <Text style={styles.fieldLabel}>Gender</Text>
+            <BouncyBoxTextInput
+              value={gender}
+              onChangeText={setGender}
+              placeholder="What's your gender?"
+              width="55%"
+            />
+          </View>
+
+          <View style={styles.fieldContainer}>
+            <Text style={styles.fieldLabel}>Weight</Text>
+            <BouncyBoxTextInput
+              value={weight}
+              onChangeText={setWeight}
+              placeholder="What's your weight (lbs)?"
+              keyboardType="numeric"
+              width="65%"
+            />
+          </View>
+
+          <View style={styles.nextButtonContainer}>
             <TouchableOpacity
               style={[
-                styles.button,
-                { backgroundColor: allFieldsFilled ? "white" : "gray" },
+                styles.nextButton,
+                allFieldsFilled ? styles.nextButtonActive : styles.nextButtonDisabled,
               ]}
               disabled={!allFieldsFilled}
               onPress={handleNextPress}
             >
-              <Text style={styles.nextButtonText}>Next</Text>
+              <Text
+                style={[
+                  styles.nextButtonText,
+                  allFieldsFilled ? styles.nextButtonTextActive : styles.nextButtonTextDisabled,
+                ]}
+              >
+                Next
+              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -146,81 +149,61 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "black",
   },
-  scrollContainer: {
-    flexGrow: 1,
+  contentContainer: {
+    padding: 20,
+    paddingTop: 60,
   },
   header: {
     fontSize: 40,
     color: "white",
     fontWeight: "700",
-    padding: 30,
-    paddingTop: 70,
+    marginBottom: 10,
+    textAlign: 'left',
+    width: '100%',
   },
-  form: {
-    padding: 20,
-    paddingLeft: 40,
-  },
-  subheadings: {
+  subheader: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "white",
-    marginTop: 5,
+    color: 'white',
+    marginBottom: 30,
+    textAlign: 'left',
+    width: '100%',
+  },
+  fieldContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  fieldLabel: {
+    fontSize: 16,
+    color: 'white',
     marginBottom: 5,
-    marginLeft: -10,
   },
-  userInput: {
-    borderBottomWidth: 1,
-    borderColor: "white",
-    width: "65%",
-    fontSize: 16,
-    color: "white",
-    marginBottom: 20,
-    paddingVertical: 10,
+  nextButtonContainer: {
+    width: '100%',
+    alignItems: 'flex-end',
+    marginTop: 30,
+    marginBottom: 30,
   },
-  userInput2: {
-    borderBottomWidth: 1,
-    borderColor: "white",
-    width: "40%",
-    fontSize: 16,
-    color: "white",
-    marginBottom: 20,
-    paddingVertical: 10,
-  },
-  userInput3: {
-    borderBottomWidth: 1,
-    borderColor: "white",
-    width: "50%",
-    fontSize: 16,
-    color: "white",
-    marginBottom: 20,
-    paddingVertical: 10,
-  },
-  userInput4: {
-    borderBottomWidth: 1,
-    borderColor: "white",
-    width: "60%",
-    fontSize: 16,
-    color: "white",
-    marginBottom: 130,
-    paddingVertical: 10,
-  },
-  buttonContainer: {
-    flexDirection: "row",
+  nextButton: {
+    borderRadius: 25,
+    paddingVertical: 12,
     paddingHorizontal: 30,
-    justifyContent: "flex-end",
-    marginBottom: 100,
+    width: 100,
   },
-  button: {
-    borderRadius: 30,
-    paddingVertical: 15,
-    width: "30%",
-    alignItems: "center",
-    alignSelf: 'flex-end',
+  nextButtonActive: {
+    backgroundColor: 'white',
+  },
+  nextButtonDisabled: {
+    backgroundColor: '#444',
   },
   nextButtonText: {
-    color: "black",
     fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  nextButtonTextActive: {
+    color: '#2E3140',
+  },
+  nextButtonTextDisabled: {
+    color: '#888',
   },
 });

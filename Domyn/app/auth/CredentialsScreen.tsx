@@ -1,4 +1,4 @@
-// CredentialsScreen.tsx
+// app / auth / CredentialsScreen.tsx
 
 import React, { useState, useMemo } from 'react';
 import {
