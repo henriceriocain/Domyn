@@ -19,7 +19,7 @@ const Layout = () => {
         }}
       >
         <Stack.Screen
-          name="auth/editExerciseScreen"
+          name="auth/EditExerciseScreen"
           options={{
             presentation: 'modal',
             animation: 'slide_from_bottom',
@@ -30,7 +30,7 @@ const Layout = () => {
           }}
         />
         <Stack.Screen
-          name="auth/addExerciseScreen"
+          name="auth/AddExerciseScreen"
           options={{
             presentation: 'modal',
             animation: 'slide_from_bottom',

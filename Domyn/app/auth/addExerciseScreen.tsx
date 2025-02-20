@@ -4,18 +4,18 @@ import React, { useState } from 'react';
 import { 
   View, 
   Text, 
-  TextInput, 
   StyleSheet, 
   ScrollView, 
   TouchableWithoutFeedback, 
   KeyboardAvoidingView, 
   Platform, 
   Keyboard, 
-  Alert 
+  Alert,
+  TouchableOpacity
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
-import { BouncyBox } from '../../components/BouncyBox';
+import { BouncyBoxTextInput } from '../../components/BouncyBoxTextInput';
 import type { UserContextProps } from '../../contexts/UserContext';
 
 const AddExerciseScreen = () => {
@@ -24,7 +24,6 @@ const AddExerciseScreen = () => {
   const { getWorkout, updateWorkout } = useUserContext() as UserContextProps;
   const workout = getWorkout(day as string);
 
-  // Local state for exercise fields
   const [nameOfExercise, setNameOfExercise] = useState('');
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
@@ -51,7 +50,6 @@ const AddExerciseScreen = () => {
       return;
     }
     if (workout) {
-      // Add the new exercise to the workout’s exercise array.
       workout.exercise.push({
         nameOfExercise,
         weight: weightNum,
@@ -63,61 +61,85 @@ const AddExerciseScreen = () => {
     }
   };
 
+  const isValid = nameOfExercise.trim() && weight.trim() && reps.trim() && sets.trim();
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView keyboardShouldPersistTaps="handled">
-          <View style={styles.content}>
-            <Text style={styles.header}>Add Exercise</Text>
+        <ScrollView 
+          contentContainerStyle={styles.contentContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.header}>New Exercise</Text>
+          <Text style={styles.subheader}>Add details for your exercise.</Text>
+
+          <View style={styles.formContainer}>
             <View style={styles.formGroup}>
               <Text style={styles.label}>Exercise Name</Text>
-              <TextInput
-                style={styles.input}
+              <BouncyBoxTextInput
                 value={nameOfExercise}
                 onChangeText={setNameOfExercise}
                 placeholder="Enter exercise name"
-                placeholderTextColor="#666"
+                keyboardType="default"
+                width="100%"
               />
             </View>
+
             <View style={styles.formGroup}>
               <Text style={styles.label}>Weight (lbs)</Text>
-              <TextInput
-                style={styles.input}
+              <BouncyBoxTextInput
                 value={weight}
                 onChangeText={setWeight}
                 placeholder="Enter weight"
-                placeholderTextColor="#666"
                 keyboardType="numeric"
+                width="40%"
               />
             </View>
+
             <View style={styles.formGroup}>
               <Text style={styles.label}>Reps</Text>
-              <TextInput
-                style={styles.input}
+              <BouncyBoxTextInput
                 value={reps}
                 onChangeText={setReps}
                 placeholder="Enter reps"
-                placeholderTextColor="#666"
                 keyboardType="numeric"
+                width="40%"
               />
             </View>
+
             <View style={styles.formGroup}>
               <Text style={styles.label}>Sets</Text>
-              <TextInput
-                style={styles.input}
+              <BouncyBoxTextInput
                 value={sets}
                 onChangeText={setSets}
                 placeholder="Enter sets"
-                placeholderTextColor="#666"
                 keyboardType="numeric"
+                width="35%"
               />
             </View>
-            <BouncyBox containerStyle={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.saveButtonText}>Save Exercise</Text>
-            </BouncyBox>
+          </View>
+
+          <View style={styles.nextButtonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.nextButton,
+                isValid ? styles.nextButtonActive : styles.nextButtonDisabled,
+              ]}
+              onPress={handleSave}
+              disabled={!isValid}
+            >
+              <Text 
+                style={[
+                  styles.nextButtonText,
+                  isValid ? styles.nextButtonTextActive : styles.nextButtonTextDisabled,
+                ]}
+              >
+                Save
+              </Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -128,28 +150,67 @@ const AddExerciseScreen = () => {
 export default AddExerciseScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'black' },
-  content: { padding: 20, paddingTop: 60 },
-  header: { fontSize: 32, fontWeight: '700', color: 'white', marginBottom: 30 },
-  formGroup: { marginBottom: 20 },
-  label: { fontSize: 18, color: 'white', marginBottom: 8 },
-  input: {
-    backgroundColor: '#262626',
-    color: 'white',
-    padding: 10,
-    borderRadius: 5,
-    fontSize: 16,
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
   },
-  saveButton: {
-    backgroundColor: '#1a1a1a',
-    paddingVertical: 15,
-    alignItems: 'center',
-    borderRadius: 10,
-    marginTop: 20,
+  contentContainer: {
+    padding: 20,
+    paddingTop: 60,
   },
-  saveButtonText: {
+  header: {
+    fontSize: 40,
+    fontWeight: '700',
     color: 'white',
+    marginBottom: 10,
+    textAlign: 'left',
+    width: '100%',
+  },
+  subheader: {
+    fontSize: 18,
+    color: 'white',
+    marginBottom: 30,
+    textAlign: 'left',
+    width: '100%',
+  },
+  formContainer: {
+    marginTop: 10,
+  },
+  formGroup: {
+    marginBottom: 25,
+  },
+  label: {
     fontSize: 16,
-    fontWeight: '600',
+    color: 'white',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  nextButtonContainer: {
+    width: '100%',
+    alignItems: 'flex-end',
+    marginTop: 30,
+  },
+  nextButton: {
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    width: 100,
+  },
+  nextButtonActive: {
+    backgroundColor: 'white',
+  },
+  nextButtonDisabled: {
+    backgroundColor: '#444',
+  },
+  nextButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  nextButtonTextActive: {
+    color: '#2E3140',
+  },
+  nextButtonTextDisabled: {
+    color: '#888',
   },
 });

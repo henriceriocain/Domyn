@@ -84,11 +84,11 @@ export default function CustomizeWorkout() {
   };
 
   const handleExercisePress = (index: number) => {
-    router.push({ pathname: './editExerciseScreen', params: { day: dayString, index } });
+    router.push({ pathname: './EditExerciseScreen', params: { day: dayString, index } });
   };
 
   const handleAddExercise = () => {
-    router.push({ pathname: './addExerciseScreen', params: { day: dayString } });
+    router.push({ pathname: './AddExerciseScreen', params: { day: dayString } });
   };
 
   return (

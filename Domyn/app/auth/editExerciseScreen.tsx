@@ -1,21 +1,20 @@
 // app / auth / EditExerciseScreen.tsx
-
 import React, { useState } from 'react';
 import { 
   View, 
   Text, 
-  TextInput, 
   StyleSheet, 
   ScrollView, 
   TouchableWithoutFeedback, 
   KeyboardAvoidingView, 
   Platform, 
   Keyboard, 
-  Alert 
+  Alert,
+  TouchableOpacity
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
-import { BouncyBox } from '../../components/BouncyBox';
+import { BouncyBoxTextInput } from '../../components/BouncyBoxTextInput';
 import type { UserContextProps } from '../../contexts/UserContext';
 
 const EditExerciseScreen = () => {
@@ -26,7 +25,6 @@ const EditExerciseScreen = () => {
   const exerciseIndex = parseInt(index as string);
   const currentExercise = workout?.exercise[exerciseIndex];
 
-  // Pre-fill fields with existing exercise data.
   const [nameOfExercise, setNameOfExercise] = useState(currentExercise?.nameOfExercise || '');
   const [weight, setWeight] = useState(currentExercise?.weight.toString() || '');
   const [reps, setReps] = useState(currentExercise?.reps.toString() || '');
@@ -82,64 +80,92 @@ const EditExerciseScreen = () => {
     );
   };
 
+  const isValid = nameOfExercise.trim() && weight.trim() && reps.trim() && sets.trim();
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView 
-        style={styles.container} 
-        behavior={Platform.OS==='ios' ? 'padding' : 'height'}
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView keyboardShouldPersistTaps="handled">
-          <View style={styles.content}>
-            <Text style={styles.header}>Edit Exercise</Text>
+        <ScrollView 
+          contentContainerStyle={styles.contentContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.header}>Edit Exercise</Text>
+          <Text style={styles.subheader}>Update your exercise details.</Text>
+
+          <View style={styles.formContainer}>
             <View style={styles.formGroup}>
               <Text style={styles.label}>Exercise Name</Text>
-              <TextInput 
-                style={styles.input}
+              <BouncyBoxTextInput
                 value={nameOfExercise}
                 onChangeText={setNameOfExercise}
                 placeholder="Enter exercise name"
-                placeholderTextColor="#666"
+                keyboardType="default"
+                width="100%"
               />
             </View>
+
             <View style={styles.formGroup}>
               <Text style={styles.label}>Weight (lbs)</Text>
-              <TextInput 
-                style={styles.input}
+              <BouncyBoxTextInput
                 value={weight}
                 onChangeText={setWeight}
                 placeholder="Enter weight"
-                placeholderTextColor="#666"
                 keyboardType="numeric"
+                width="40%"
               />
             </View>
+
             <View style={styles.formGroup}>
               <Text style={styles.label}>Reps</Text>
-              <TextInput 
-                style={styles.input}
+              <BouncyBoxTextInput
                 value={reps}
                 onChangeText={setReps}
                 placeholder="Enter reps"
-                placeholderTextColor="#666"
                 keyboardType="numeric"
+                width="40%"
               />
             </View>
+
             <View style={styles.formGroup}>
               <Text style={styles.label}>Sets</Text>
-              <TextInput 
-                style={styles.input}
+              <BouncyBoxTextInput
                 value={sets}
                 onChangeText={setSets}
                 placeholder="Enter sets"
-                placeholderTextColor="#666"
                 keyboardType="numeric"
+                width="35%"
               />
             </View>
-            <BouncyBox containerStyle={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.saveButtonText}>Save Changes</Text>
-            </BouncyBox>
-            <BouncyBox containerStyle={styles.deleteButton} onPress={handleDelete}>
-              <Text style={styles.deleteButtonText}>Delete Exercise</Text>
-            </BouncyBox>
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={handleDelete}
+            >
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.nextButton,
+                isValid ? styles.nextButtonActive : styles.nextButtonDisabled,
+              ]}
+              onPress={handleSave}
+              disabled={!isValid}
+            >
+              <Text 
+                style={[
+                  styles.nextButtonText,
+                  isValid ? styles.nextButtonTextActive : styles.nextButtonTextDisabled,
+                ]}
+              >
+                Save
+              </Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -150,57 +176,81 @@ const EditExerciseScreen = () => {
 export default EditExerciseScreen;
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: 'black' 
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
   },
-  content: { 
-    padding: 20, 
-    paddingTop: 60 
+  contentContainer: {
+    padding: 20,
+    paddingTop: 60,
   },
-  header: { 
-    fontSize: 32, 
-    fontWeight: '700', 
-    color: 'white', 
-    marginBottom: 30 
+  header: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: 10,
+    textAlign: 'left',
+    width: '100%',
   },
-  formGroup: { 
-    marginBottom: 20 
+  subheader: {
+    fontSize: 18,
+    color: 'white',
+    marginBottom: 30,
+    textAlign: 'left',
+    width: '100%',
   },
-  label: { 
-    fontSize: 18, 
-    color: 'white', 
-    marginBottom: 8 
+  formContainer: {
+    marginTop: 10,
   },
-  input: { 
-    backgroundColor: '#262626', 
-    color: 'white', 
-    padding: 10, 
-    borderRadius: 5, 
-    fontSize: 16 
+  formGroup: {
+    marginBottom: 25,
   },
-  saveButton: {
-    backgroundColor: '#1a1a1a', 
-    paddingVertical: 15, 
-    alignItems: 'center', 
-    borderRadius: 10, 
-    marginTop: 20,
+  label: {
+    fontSize: 16,
+    color: 'white',
+    marginBottom: 8,
+    fontWeight: '500',
   },
-  saveButtonText: {
-    color: 'white', 
-    fontSize: 16, 
-    fontWeight: '600',
+  buttonContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 30,
+  },
+  nextButton: {
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    width: 100,
+  },
+  nextButtonActive: {
+    backgroundColor: 'white',
+  },
+  nextButtonDisabled: {
+    backgroundColor: '#444',
+  },
+  nextButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  nextButtonTextActive: {
+    color: '#2E3140',
+  },
+  nextButtonTextDisabled: {
+    color: '#888',
   },
   deleteButton: {
-    backgroundColor: '#b00020', // Red for destructive action
-    paddingVertical: 15,
-    alignItems: 'center',
-    borderRadius: 10,
-    marginTop: 10,
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    backgroundColor: '#b00020',
   },
   deleteButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
