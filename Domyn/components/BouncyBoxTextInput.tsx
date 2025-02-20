@@ -1,4 +1,4 @@
-// components / BouncyBoxTextInput works
+// components / BouncyBoxTextInput 
 
 import React, { useState, useRef } from 'react';
 import {
@@ -17,6 +17,7 @@ interface BouncyBoxTextInputProps {
   placeholder: string;
   keyboardType?: 'default' | 'numeric';
   width?: DimensionValue;
+  secureTextEntry?: boolean;
 }
 
 export const BouncyBoxTextInput: React.FC<BouncyBoxTextInputProps> = ({
@@ -25,6 +26,7 @@ export const BouncyBoxTextInput: React.FC<BouncyBoxTextInputProps> = ({
   placeholder,
   keyboardType = 'default',
   width = '100%',
+  secureTextEntry = false,
 }) => {
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value);
@@ -52,16 +54,18 @@ export const BouncyBoxTextInput: React.FC<BouncyBoxTextInputProps> = ({
     width,
   };
 
+  // When not editing and secureTextEntry is true, mask the text.
+  const displayText = secureTextEntry && !editing
+    ? '•'.repeat(inputValue.length)
+    : (value || placeholder);
+
   return (
     // Wrap in a view that always returns true for responder and stops propagation.
     <View
       onStartShouldSetResponder={() => true}
       onResponderRelease={(e) => e.stopPropagation()}
     >
-      <BouncyBox 
-        containerStyle={containerStyle}
-        onPress={!editing ? handlePress : undefined}
-      >
+      <BouncyBox containerStyle={containerStyle} onPress={!editing ? handlePress : undefined}>
         <View style={styles.inputWrapper}>
           {editing ? (
             <TextInput
@@ -75,10 +79,11 @@ export const BouncyBoxTextInput: React.FC<BouncyBoxTextInputProps> = ({
               placeholderTextColor="#666"
               keyboardType={keyboardType}
               returnKeyType="done"
+              secureTextEntry={secureTextEntry}
             />
           ) : (
             <Text style={[styles.inputText, !value && styles.inputPlaceholder]}>
-              {value || placeholder}
+              {displayText}
             </Text>
           )}
         </View>
