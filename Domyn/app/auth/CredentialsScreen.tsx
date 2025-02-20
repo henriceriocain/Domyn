@@ -14,6 +14,8 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../firebase/firebaseConfig'; 
 import { useRouter } from 'expo-router';
 import { BouncyBox } from '../../components/BouncyBox';
 
@@ -24,14 +26,14 @@ export default function CredentialsScreen() {
   const [retypePassword, setRetypePassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Basic password requirements:
+  // At least 8 characters, one uppercase letter, and one digit.
   const isValid = useMemo(() => {
-    const allFilled = email.trim() !== '' && 
-                     password.trim() !== '' && 
-                     retypePassword.trim() !== '';
+    const allFilled = email.trim() !== '' && password.trim() !== '' && retypePassword.trim() !== '';
     const passwordsMatch = password === retypePassword;
-    const isEmailValid = /\S+@\S+\.\S+/.test(email); // Basic email validation
-    
-    return allFilled && passwordsMatch && isEmailValid;
+    const isEmailValid = /\S+@\S+\.\S+/.test(email);
+    const isPasswordValid = /^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password);
+    return allFilled && passwordsMatch && isEmailValid && isPasswordValid;
   }, [email, password, retypePassword]);
 
   const handleNext = async () => {
@@ -39,19 +41,27 @@ export default function CredentialsScreen() {
     
     setLoading(true);
     try {
-      // Replace with your backend API endpoint.
-      const response = await fetch('https://your-backend-url.com/api/credentials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to save credentials');
-      }
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       router.push('/auth/PersonalDetailsScreen');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      Alert.alert('Error', 'There was a problem saving your credentials. Please try again.');
+      let errorMessage = "There was a problem creating your account. Please try again.";
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = "That email address is already in use.";
+            break;
+          case 'auth/invalid-email':
+            errorMessage = "The email address is invalid.";
+            break;
+          case 'auth/weak-password':
+            errorMessage = "The password is too weak.";
+            break;
+          default:
+            errorMessage = error.message || errorMessage;
+        }
+      }
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -61,13 +71,11 @@ export default function CredentialsScreen() {
   const BouncyEmailInput = ({ value, onChangeText }: { value: string; onChangeText: (text: string) => void }) => {
     const [editing, setEditing] = useState(false);
     const [inputValue, setInputValue] = useState(value);
-
     const handlePress = () => setEditing(true);
     const handleBlur = () => {
       setEditing(false);
       onChangeText(inputValue);
     };
-
     return (
       <BouncyBox containerStyle={styles.emailContainer} onPress={!editing ? handlePress : undefined}>
         <View style={styles.emailWrapper}>
@@ -106,13 +114,11 @@ export default function CredentialsScreen() {
   }) => {
     const [editing, setEditing] = useState(false);
     const [inputValue, setInputValue] = useState(value);
-
     const handlePress = () => setEditing(true);
     const handleBlur = () => {
       setEditing(false);
       onChangeText(inputValue);
     };
-
     return (
       <BouncyBox containerStyle={styles.passwordContainer} onPress={!editing ? handlePress : undefined}>
         <View style={styles.passwordWrapper}>
@@ -146,22 +152,21 @@ export default function CredentialsScreen() {
           <Text style={styles.subheader}>
             Please enter your email and create a secure password.
           </Text>
-
           <View style={styles.fieldContainer}>
             <Text style={styles.fieldLabel}>Email</Text>
             <BouncyEmailInput value={email} onChangeText={setEmail} />
           </View>
-
           <View style={styles.fieldContainer}>
-            <Text style={styles.fieldLabel}>Password</Text>
+            <View style={styles.passwordLabelRow}>
+              <Text style={styles.fieldLabel}>Password</Text>
+              <Text style={styles.requirementsLabel}>(Min 8 chars, 1 uppercase, 1 number)</Text>
+            </View>
             <BouncyPasswordInput value={password} onChangeText={setPassword} placeholder="Enter your password" />
           </View>
-
           <View style={styles.fieldContainer}>
             <Text style={styles.fieldLabel}>Retype Password</Text>
             <BouncyPasswordInput value={retypePassword} onChangeText={setRetypePassword} placeholder="Retype your password" />
           </View>
-
           <View style={styles.nextButtonContainer}>
             <TouchableOpacity
               style={[
@@ -215,10 +220,19 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 20,
   },
+  passwordLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   fieldLabel: {
     fontSize: 16,
     color: 'white',
     marginBottom: 5,
+  },
+  requirementsLabel: {
+    fontSize: 12,
+    color: '#aaa',
   },
   emailContainer: {
     borderRadius: 10,

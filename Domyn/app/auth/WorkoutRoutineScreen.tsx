@@ -1,6 +1,6 @@
 // app / auth / WorkoutRoutineScreen.tsx
 
-import React, { useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,40 +12,60 @@ import {
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useUserContext } from '../../hooks/useUserContext';
+import { auth, db } from '../../firebase/firebaseConfig';
+import { collection, query, getDocs } from 'firebase/firestore';
 
-function getFullDayName(abbrev: string): string {
-  const mapping: { [key: string]: string } = {
-    mon: 'Monday',
-    tues: 'Tuesday',
-    tue: 'Tuesday',
-    wed: 'Wednesday',
-    thurs: 'Thursday',
-    thu: 'Thursday',
-    fri: 'Friday',
-    sat: 'Saturday',
-    sun: 'Sunday',
-  };
-  return mapping[abbrev.toLowerCase()] || abbrev;
+function getFullDayName(day: string): string {
+  // Now assuming day is stored as full name ("Monday", etc.)
+  return day;
 }
 
 export default function WorkoutRoutineScreen() {
   const router = useRouter();
-  const { selectedDays, getWorkout } = useUserContext();
+  const { selectedDays } = useUserContext();
+  
+  // Local state for fetched workout routines.
+  const [workoutData, setWorkoutData] = useState<{ [day: string]: any }>({});
 
-  // All days are complete only if each workout has a non‑empty custom name and at least one exercise.
+  // Fetch workoutRoutine documents from Firestore.
+  useEffect(() => {
+    const fetchWorkouts = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      try {
+        const workoutsRef = collection(db, 'users', currentUser.uid, 'workoutRoutine');
+        const q = query(workoutsRef);
+        const querySnapshot = await getDocs(q);
+        const data: { [day: string]: any } = {};
+        querySnapshot.forEach((doc) => {
+          data[doc.id] = doc.data();
+        });
+        setWorkoutData(data);
+      } catch (error) {
+        console.error("Error fetching workout routines:", error);
+      }
+    };
+    fetchWorkouts();
+  }, []);
+
+  // Helper function to get workout for a given day.
+  const getWorkout = (day: string) => workoutData[day];
+
+  // Check if each selected day is "complete" (has a non‑empty workoutName and at least one exercise)
   const allComplete = selectedDays.every(day => {
     const workout = getWorkout(day);
     return (
       workout &&
-      workout.dayName.trim() !== '' &&
-      workout.exercise &&
-      workout.exercise.length > 0
+      workout.workoutName &&
+      workout.workoutName.trim() !== '' &&
+      workout.exercises &&
+      workout.exercises.length > 0
     );
   });
 
   useFocusEffect(
     React.useCallback(() => {
-      // Reset animations if needed.
+      // Optionally refresh animations or data if needed.
     }, [])
   );
 
@@ -56,10 +76,11 @@ export default function WorkoutRoutineScreen() {
   const renderDaySection = (day: string, index: number) => {
     const scaleValue = useRef(new Animated.Value(1)).current;
     const workout = getWorkout(day);
-    const customName = workout?.dayName || '';
-    const exercises = workout?.exercise || [];
+    // Use workoutName and exercises fields from Firestore.
+    const customName = workout?.workoutName || '';
+    const exercises = workout?.exercises || [];
 
-    // Determine status based on workout completeness.
+    // Determine status text based on the completeness of the workout routine.
     let statusText = '';
     if (!customName.trim() && exercises.length === 0) {
       statusText = 'Tap to customize';
@@ -123,18 +144,14 @@ export default function WorkoutRoutineScreen() {
           onPress={handlePress}
         >
           <View style={styles.daySectionContent}>
-            {/* Day label in a gray box */}
             <View style={styles.dayLabelContainer}>
               <Text style={styles.dayLabel}>{getFullDayName(day)}</Text>
             </View>
-            {/* Bottom row: workout name and status */}
             <View style={styles.bottomRow}>
               <Text style={styles.customNameText}>{`"${customName}"`}</Text>
               <View style={styles.statusBar}>
                 {statusText === 'Complete' ? (
-                  <Text style={[styles.statusText, styles.completeText]}>
-                    ✓
-                  </Text>
+                  <Text style={[styles.statusText, styles.completeText]}>✓</Text>
                 ) : (
                   <Text style={styles.statusText}>{statusText}</Text>
                 )}
@@ -147,10 +164,7 @@ export default function WorkoutRoutineScreen() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.scrollContainer}
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
         <Text style={styles.header}>
           What are your workout routines on these days?
@@ -158,11 +172,7 @@ export default function WorkoutRoutineScreen() {
         {selectedDays.map((day, index) => renderDaySection(day, index))}
         <View style={styles.buttonContainer}>
           {allComplete && (
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleNext}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.button} onPress={handleNext} activeOpacity={0.7}>
               <Text style={styles.nextButtonText}>Next</Text>
             </TouchableOpacity>
           )}
@@ -207,7 +217,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 5,
     alignSelf: 'flex-start',
-    marginBottom: -1, // Reduced gap
+    marginBottom: -1,
   },
   dayLabel: {
     color: 'white',
@@ -223,7 +233,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 24,
     fontWeight: '700',
-    marginTop: 0,
   },
   statusBar: {
     backgroundColor: '#262626',

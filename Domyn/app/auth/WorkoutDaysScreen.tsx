@@ -1,53 +1,74 @@
 // app / auth / WorkoutDaysScreen.tsx
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
+import { auth, db } from '../../firebase/firebaseConfig';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
-// This initializes the 'Days' object, that's a TypeScript type. Types define the structure of a data object.
+// Updated type with full weekday names.
 type Days = {
-  Mon: boolean;
-  Tues: boolean;
-  Wed: boolean;
-  Thu: boolean;
-  Fri: boolean;
-  Sat: boolean;
-  Sun: boolean;
+  Monday: boolean;
+  Tuesday: boolean;
+  Wednesday: boolean;
+  Thursday: boolean;
+  Friday: boolean;
+  Saturday: boolean;
+  Sunday: boolean;
 };
 
 export default function WorkoutDaysScreen() {
   const router = useRouter();
-
-  // This destructures the name, setSelectedDays, and addWorkout properties of UserContext
-  // useUserContext is a React hook that allows us to use UserContext, its values, and its methods
   const { name, setSelectedDays, addWorkout } = useUserContext();
 
-  // This sets all Days to be by default false. Consts are constant variables where values cannot be changed.
+  // Initialize full weekday names (all false).
   const [days, setDays] = useState<Days>({
-    Mon: false,
-    Tues: false,
-    Wed: false,
-    Thu: false,
-    Fri: false,
-    Sat: false,
-    Sun: false,
+    Monday: false,
+    Tuesday: false,
+    Wednesday: false,
+    Thursday: false,
+    Friday: false,
+    Saturday: false,
+    Sunday: false,
   });
 
-  // Defines a const function, input is a day of a Days object
   const handleDayPress = (day: keyof Days) => {
     setDays((prevDays) => ({ ...prevDays, [day]: !prevDays[day] }));
   };
 
-  // Save selected days to UserContext and navigate to the next screen
-  const handleNext = () => {
+  // Save selected days to UserContext and persist to Firestore.
+  const handleNext = async () => {
     const selectedDays = Object.keys(days).filter((day) => days[day as keyof Days]);
     if (selectedDays.length > 0) {
       setSelectedDays(selectedDays); // Save to UserContext
-      selectedDays.forEach((day) => addWorkout(day as keyof Days)); // Optionally add workouts
-      router.push('./WorkoutRoutineScreen'); // Navigate to the next screen
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        Alert.alert("Error", "User not authenticated.");
+        return;
+      }
+      try {
+        for (const day of selectedDays) {
+          const dayDocRef = doc(db, "users", currentUser.uid, "workoutRoutine", day);
+          await setDoc(
+            dayDocRef,
+            {
+              day,
+              workoutName: null, // Default value; will be updated later.
+              exercises: [],     // Initially empty.
+              createdAt: serverTimestamp(),
+            },
+            { merge: true }
+          );
+        }
+        selectedDays.forEach((day) => addWorkout(day as keyof Days));
+        router.push('./WorkoutRoutineScreen');
+      } catch (error) {
+        console.error("Error updating workoutRoutine:", error);
+        Alert.alert("Error", "Error saving your workout days. Please try again.");
+      }
     } else {
-      alert('Please select at least one day.');
+      Alert.alert("Selection Required", "Please select at least one day.");
     }
   };
 
@@ -72,7 +93,6 @@ export default function WorkoutDaysScreen() {
           </TouchableOpacity>
         ))}
       </View>
-
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[
@@ -119,12 +139,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   dayBox: {
-    width: '22%',
+    width: "auto",
     marginVertical: 10,
     marginRight: 10,
     padding: 15,
-    backgroundColor: '#404040',
-    borderRadius: 10,
+    backgroundColor: '#202020',
+    borderRadius: 20,
     alignItems: 'center',
   },
   daySelected: {
@@ -138,8 +158,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
     paddingHorizontal: 10,
-    marginTop: 290,
-    marginBottom: 100,
+    marginTop: 40,
   },
   button: {
     borderRadius: 30,

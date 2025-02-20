@@ -1,7 +1,5 @@
 // app / auth / PersonalDetailsScreen.tsx
-
-// Import statement
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,50 +11,78 @@ import {
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { UserContext } from '../../contexts/UserContext'; // Adjust the path as needed
+import { UserContext } from '../../contexts/UserContext'; // If you're still using it for local state
+import { auth, db } from '../../firebase/firebaseConfig';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
-// File function
 export default function PersonalDetailsScreen() {
-
-  // Router const to route buttons to other files
   const router = useRouter();
-  // UserContext const to store and utilize user data
-  const userContext = useContext(UserContext); 
+  const userContext = useContext(UserContext);
 
-  // Case where the context is not available
-  if (!userContext) {
-    return null;
-  }
+  // Fallback local state in case context isn't used; you might later synchronize these with Firestore.
+  const [name, setName] = useState(userContext?.name || '');
+  const [age, setAge] = useState(userContext?.age || '');
+  const [gender, setGender] = useState(userContext?.gender || '');
+  const [weight, setWeight] = useState(userContext?.weight || '');
 
-  // Initializing userContext
-  const { name, setName, age, setAge, gender, setGender, weight, setWeight } = userContext;
+  // Check if all fields are filled
+  const allFieldsFilled = name.trim() && age.trim() && gender.trim() && weight.trim();
 
-  // Variable to check all fields are filled
-  const allFieldsFilled = name && age && gender && weight;
+  const handleNextPress = async () => {
+    if (!allFieldsFilled) return;
 
-  // Handler for the Next button
-  const handleNextPress = () => {
-    router.push("./WorkoutDaysScreen");
+    // Get the currently signed-in user's UID
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      Alert.alert("Error", "User not authenticated. Please log in again.");
+      return;
+    }
+
+    try {
+      // Create or update the user's Firestore document.
+      const userDocRef = doc(db, "users", currentUser.uid);
+      await setDoc(userDocRef, {
+        personalData: {
+          name,
+          age,
+          gender,
+          weight,
+          email: currentUser.email,
+        },
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+
+      // Optionally update your UserContext if needed
+      if (userContext) {
+        userContext.setName(name);
+        userContext.setAge(age);
+        userContext.setGender(gender);
+        userContext.setWeight(weight);
+      }
+
+      router.push("./WorkoutDaysScreen");
+    } catch (error) {
+      console.error("Error updating personal details:", error);
+      Alert.alert("Error", "There was a problem saving your details. Please try again.");
+    }
   };
 
-  // Handler for the Back button
   const handleBackPress = () => {
     router.push("./WelcomeScreen");
   };
 
   return (
-    // Prevents keyboard from blocking elements
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"} 
-      keyboardVerticalOffset={5} 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={5}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <Text style={styles.header}>Let's Get To Know Each Other...</Text>
-
           <View style={styles.form}>
             {/* First Name */}
             <Text style={styles.subheadings}>First Name</Text>
@@ -65,9 +91,8 @@ export default function PersonalDetailsScreen() {
               placeholder="What's your first name?"
               placeholderTextColor="gray"
               value={name}
-              onChangeText={setName} // Update context state
+              onChangeText={setName}
             />
-
             {/* Age */}
             <Text style={styles.subheadings}>Age</Text>
             <TextInput
@@ -75,10 +100,9 @@ export default function PersonalDetailsScreen() {
               placeholder="How old are you?"
               placeholderTextColor="gray"
               value={age}
-              onChangeText={setAge} // Update context state
+              onChangeText={setAge}
               keyboardType="numeric"
             />
-
             {/* Gender */}
             <Text style={styles.subheadings}>Gender</Text>
             <TextInput
@@ -86,9 +110,8 @@ export default function PersonalDetailsScreen() {
               placeholder="What's your gender?"
               placeholderTextColor="gray"
               value={gender}
-              onChangeText={setGender} // Update context state
+              onChangeText={setGender}
             />
-
             {/* Weight */}
             <Text style={styles.subheadings}>Weight</Text>
             <TextInput
@@ -96,21 +119,17 @@ export default function PersonalDetailsScreen() {
               placeholder="What's your weight (lbs)?"
               placeholderTextColor="gray"
               value={weight}
-              onChangeText={setWeight} // Update context state
+              onChangeText={setWeight}
               keyboardType="numeric"
             />
           </View>
-
-          {/* Button Container */}
           <View style={styles.buttonContainer}>
-
-            {/* Next Button */}
             <TouchableOpacity
               style={[
                 styles.button,
-                { backgroundColor: allFieldsFilled ? "white" : "gray" }, // Button color based on input completion
+                { backgroundColor: allFieldsFilled ? "white" : "gray" },
               ]}
-              disabled={!allFieldsFilled} // Disable button if fields are empty
+              disabled={!allFieldsFilled}
               onPress={handleNextPress}
             >
               <Text style={styles.nextButtonText}>Next</Text>
@@ -122,7 +141,6 @@ export default function PersonalDetailsScreen() {
   );
 }
 
-// Imported StyleSheet const and called it styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -146,8 +164,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "white",
-    marginTop: 5, // Added margin for spacing
-    marginBottom: 5, // Added margin for spacing
+    marginTop: 5,
+    marginBottom: 5,
     marginLeft: -10,
   },
   userInput: {
@@ -187,17 +205,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   buttonContainer: {
-    flexDirection: "row",            // Arrange buttons horizontally
-    paddingHorizontal: 30,           // Horizontal padding for the container
+    flexDirection: "row",
+    paddingHorizontal: 30,
     justifyContent: "flex-end",
     marginBottom: 100,
   },
   button: {
     borderRadius: 30,
     paddingVertical: 15,
-    width: "30%",                     // Adjust width to fit side by side
-    alignItems: "center",            // Center text horizontally
-    alignSelf: 'flex-end', // Add this line 
+    width: "30%",
+    alignItems: "center",
+    alignSelf: 'flex-end',
   },
   nextButtonText: {
     color: "black",
@@ -205,9 +223,4 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
   },
-  backButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
-  }
 });
