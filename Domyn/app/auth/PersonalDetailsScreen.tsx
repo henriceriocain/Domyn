@@ -18,6 +18,7 @@ import { UserContext } from '../../contexts/UserContext';
 import { auth, db } from '../../firebase/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { BouncyBoxTextInput } from '../../components/BouncyBoxTextInput';
+import { useAsyncOperation } from '../../hooks/useAsyncOperation';
 
 export default function PersonalDetailsScreen() {
   const router = useRouter();
@@ -27,6 +28,8 @@ export default function PersonalDetailsScreen() {
   const [age, setAge] = useState(userContext?.age || '');
   const [gender, setGender] = useState(userContext?.gender || '');
   const [weight, setWeight] = useState(userContext?.weight || '');
+
+  const { execute, loading } = useAsyncOperation();
 
   const allFieldsFilled = name.trim() && age.trim() && gender.trim() && weight.trim();
 
@@ -41,16 +44,22 @@ export default function PersonalDetailsScreen() {
 
     try {
       const userDocRef = doc(db, "users", currentUser.uid);
-      await setDoc(userDocRef, {
-        personalData: {
-          name,
-          age,
-          gender,
-          weight,
-          email: currentUser.email,
-        },
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
+      await execute(() =>
+        setDoc(
+          userDocRef,
+          {
+            personalData: {
+              name,
+              age,
+              gender,
+              weight,
+              email: currentUser.email,
+            },
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        )
+      );
 
       if (userContext) {
         userContext.setName(name);
@@ -125,7 +134,7 @@ export default function PersonalDetailsScreen() {
                 styles.nextButton,
                 allFieldsFilled ? styles.nextButtonActive : styles.nextButtonDisabled,
               ]}
-              disabled={!allFieldsFilled}
+              disabled={!allFieldsFilled || loading}
               onPress={handleNextPress}
             >
               <Text

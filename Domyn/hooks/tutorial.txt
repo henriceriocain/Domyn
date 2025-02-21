@@ -1,0 +1,2 @@
+Whats a hook?
+A function that lets use state and other react features without writing a class component

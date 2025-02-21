@@ -14,21 +14,25 @@ import {
   ScrollView,
 } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../firebase/firebaseConfig'; 
+import { auth } from '../../firebase/firebaseConfig';
 import { useRouter } from 'expo-router';
 import { BouncyBoxTextInput } from '../../components/BouncyBoxTextInput';
+import { useAsyncOperation } from '../../hooks/useAsyncOperation';
 
 export default function CredentialsScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [retypePassword, setRetypePassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { execute, loading } = useAsyncOperation();
 
   // Basic password requirements:
   // At least 8 characters, one uppercase letter, and one digit.
   const isValid = useMemo(() => {
-    const allFilled = email.trim() !== '' && password.trim() !== '' && retypePassword.trim() !== '';
+    const allFilled =
+      email.trim() !== '' &&
+      password.trim() !== '' &&
+      retypePassword.trim() !== '';
     const passwordsMatch = password === retypePassword;
     const isEmailValid = /\S+@\S+\.\S+/.test(email);
     const isPasswordValid = /^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password);
@@ -37,10 +41,9 @@ export default function CredentialsScreen() {
 
   const handleNext = async () => {
     if (!isValid) return;
-    
-    setLoading(true);
+
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await execute(() => createUserWithEmailAndPassword(auth, email, password));
       router.push('/auth/PersonalDetailsScreen');
     } catch (error: any) {
       console.error(error);
@@ -61,15 +64,19 @@ export default function CredentialsScreen() {
         }
       }
       Alert.alert('Error', errorMessage);
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.contentContainer}
+          keyboardShouldPersistTaps="handled"
+        >
           <Text style={styles.header}>Secure Your Account</Text>
           <Text style={styles.subheader}>
             Please enter your email and create a secure password.
@@ -87,7 +94,9 @@ export default function CredentialsScreen() {
           <View style={styles.fieldContainer}>
             <View style={styles.passwordLabelRow}>
               <Text style={styles.fieldLabel}>Password</Text>
-              <Text style={styles.requirementsLabel}>(Min 8 chars, 1 uppercase, 1 number)</Text>
+              <Text style={styles.requirementsLabel}>
+                (Min 8 chars, 1 uppercase, 1 number)
+              </Text>
             </View>
             <BouncyBoxTextInput
               value={password}

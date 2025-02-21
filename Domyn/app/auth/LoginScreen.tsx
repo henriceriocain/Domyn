@@ -17,12 +17,13 @@ import { useRouter } from 'expo-router';
 import { BouncyBoxTextInput } from '../../components/BouncyBoxTextInput';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../firebase/firebaseConfig';
+import { useAsyncOperation } from '../../hooks/useAsyncOperation';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { execute, loading } = useAsyncOperation();
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -30,9 +31,8 @@ export default function LoginScreen() {
       return;
     }
 
-    setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await execute(() => signInWithEmailAndPassword(auth, email, password));
       router.replace('/home/centralHome');
     } catch (error: any) {
       let errorMessage = 'Failed to login. Please try again.';
@@ -44,12 +44,10 @@ export default function LoginScreen() {
         errorMessage = 'Incorrect password.';
       }
       Alert.alert('Login Error', errorMessage);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const isValid = email.trim() && password.trim() && !isLoading;
+  const isValid = email.trim() && password.trim() && !loading;
 
   return (
     <KeyboardAvoidingView
@@ -97,7 +95,7 @@ export default function LoginScreen() {
               onPress={handleLogin}
               disabled={!isValid}
             >
-              <Text 
+              <Text
                 style={[
                   styles.loginButtonText,
                   isValid ? styles.loginButtonTextActive : styles.loginButtonTextDisabled,

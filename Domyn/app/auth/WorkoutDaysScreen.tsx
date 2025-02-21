@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
 import { auth, db } from '../../firebase/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useAsyncOperation } from '../../hooks/useAsyncOperation';
 
 type Days = {
   Monday: boolean;
@@ -28,7 +29,7 @@ type Days = {
 
 export default function WorkoutDaysScreen() {
   const router = useRouter();
-  const { name, setSelectedDays, addWorkout } = useUserContext();
+  const { setSelectedDays, addWorkout } = useUserContext();
 
   const [days, setDays] = useState<Days>({
     Monday: false,
@@ -39,6 +40,8 @@ export default function WorkoutDaysScreen() {
     Saturday: false,
     Sunday: false,
   });
+
+  const { execute, loading } = useAsyncOperation();
 
   const handleDayPress = (day: keyof Days) => {
     setDays((prevDays) => ({ ...prevDays, [day]: !prevDays[day] }));
@@ -54,19 +57,21 @@ export default function WorkoutDaysScreen() {
         return;
       }
       try {
-        for (const day of selectedDays) {
-          const dayDocRef = doc(db, "users", currentUser.uid, "workoutRoutine", day);
-          await setDoc(
-            dayDocRef,
-            {
-              day,
-              workoutName: null,
-              exercises: [],
-              createdAt: serverTimestamp(),
-            },
-            { merge: true }
-          );
-        }
+        await execute(async () => {
+          for (const day of selectedDays) {
+            const dayDocRef = doc(db, "users", currentUser.uid, "workoutRoutine", day);
+            await setDoc(
+              dayDocRef,
+              {
+                day,
+                workoutName: null,
+                exercises: [],
+                createdAt: serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
+        });
         selectedDays.forEach((day) => addWorkout(day as keyof Days));
         router.push('./WorkoutRoutineScreen');
       } catch (error) {
@@ -103,18 +108,18 @@ export default function WorkoutDaysScreen() {
           <TouchableOpacity
             style={[
               styles.nextButton,
-              Object.values(days).some((val) => val) 
-                ? styles.nextButtonActive 
+              Object.values(days).some((val) => val)
+                ? styles.nextButtonActive
                 : styles.nextButtonDisabled,
             ]}
             onPress={handleNext}
-            disabled={!Object.values(days).some((val) => val)}
+            disabled={!Object.values(days).some((val) => val) || loading}
           >
             <Text 
               style={[
                 styles.nextButtonText,
-                Object.values(days).some((val) => val) 
-                  ? styles.nextButtonTextActive 
+                Object.values(days).some((val) => val)
+                  ? styles.nextButtonTextActive
                   : styles.nextButtonTextDisabled,
               ]}
             >

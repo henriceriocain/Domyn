@@ -1,5 +1,6 @@
 // app / auth / WorkoutRoutineScreen.tsx
 
+// app/auth/WorkoutRoutineScreen.tsx
 import React, { useRef } from 'react';
 import { 
   View, 
@@ -16,6 +17,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useUserContext } from '../../hooks/useUserContext';
 import { auth, db } from '../../firebase/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useAsyncOperation } from '../../hooks/useAsyncOperation';
 
 function getFullDayName(day: string): string {
   return day;
@@ -24,6 +26,7 @@ function getFullDayName(day: string): string {
 export default function WorkoutRoutineScreen() {
   const router = useRouter();
   const { selectedDays, getWorkout } = useUserContext();
+  const { execute, loading } = useAsyncOperation();
 
   const allComplete = selectedDays.every(day => {
     const workout = getWorkout(day);
@@ -49,22 +52,24 @@ export default function WorkoutRoutineScreen() {
       return;
     }
     try {
-      for (const day of selectedDays) {
-        const workout = getWorkout(day);
-        if (workout) {
-          const dayDocRef = doc(db, "users", currentUser.uid, "workoutRoutine", day);
-          await setDoc(
-            dayDocRef,
-            {
-              day,
-              dayName: workout.dayName,
-              exercises: workout.exercise,
-              updatedAt: serverTimestamp(),
-            },
-            { merge: true }
-          );
+      await execute(async () => {
+        for (const day of selectedDays) {
+          const workout = getWorkout(day);
+          if (workout) {
+            const dayDocRef = doc(db, "users", currentUser.uid, "workoutRoutine", day);
+            await setDoc(
+              dayDocRef,
+              {
+                day,
+                dayName: workout.dayName,
+                exercises: workout.exercise,
+                updatedAt: serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
         }
-      }
+      });
       router.push("/auth/AllSetUpScreen");
     } catch (error) {
       console.error("Error saving workout routines:", error);
@@ -154,6 +159,7 @@ export default function WorkoutRoutineScreen() {
               style={[styles.nextButton, styles.nextButtonActive]}
               onPress={handleNext}
               activeOpacity={0.7}
+              disabled={loading}
             >
               <Text style={styles.nextButtonTextActive}>Finish</Text>
             </TouchableOpacity>
