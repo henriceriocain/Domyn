@@ -68,7 +68,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   // Skipped days state
   const [skippedDays, setSkippedDays] = useState<{ [day: string]: string }>({}); // calendar
 
-
   // Load user data from AsyncStorage
   useEffect(() => {
     const loadUserData = async () => {
@@ -79,7 +78,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         const storedWeight = await AsyncStorage.getItem('@user_weight');
         const storedWorkouts = await AsyncStorage.getItem('@workouts');
         const storedSelectedDays = await AsyncStorage.getItem('@selected_days');
-        const storedSkippedDays = await AsyncStorage.getItem('@skipped_days'); // calendar
+        const storedSkippedDays = await AsyncStorage.getItem('@skipped_days');
 
         if (storedName) setName(storedName);
         if (storedAge) setAge(storedAge);
@@ -92,14 +91,22 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           
           Object.entries(parsedWorkouts).forEach(([day, workoutData]: [string, any]) => {
             const workout = new Workout(day);
-            workout.exercise = workoutData.exercise;
+            // Update using the new Workout class properties
+            workout.customName = workoutData.customName || "";
+            workout.exercises = workoutData.exercises || [];
+            workout.created = new Date(workoutData.created || Date.now());
+            workout.lastModified = new Date(workoutData.lastModified || Date.now());
+            workout.targetMuscleGroups = workoutData.targetMuscleGroups;
+            workout.difficulty = workoutData.difficulty;
+            workout.notes = workoutData.notes;
+            
             reconstructedWorkouts[day] = workout;
           });
           
           setWorkouts(reconstructedWorkouts);
         }
         if (storedSelectedDays) setSelectedDays(JSON.parse(storedSelectedDays));
-        if (storedSkippedDays) setSkippedDays(JSON.parse(storedSkippedDays)); // calendar
+        if (storedSkippedDays) setSkippedDays(JSON.parse(storedSkippedDays));
       } catch (error) {
         console.error('Error loading data from AsyncStorage:', error);
       }

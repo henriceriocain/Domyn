@@ -23,19 +23,21 @@ const EditExerciseScreen = () => {
   const { getWorkout, updateWorkout } = useUserContext() as UserContextProps;
   const workout = getWorkout(day as string);
   const exerciseIndex = parseInt(index as string);
-  const currentExercise = workout?.exercise[exerciseIndex];
+  const currentExercise = workout?.exercises[exerciseIndex];
 
-  const [nameOfExercise, setNameOfExercise] = useState(currentExercise?.nameOfExercise || '');
+  const [nameOfExercise, setNameOfExercise] = useState(currentExercise?.name || '');
   const [weight, setWeight] = useState(currentExercise?.weight.toString() || '');
   const [reps, setReps] = useState(currentExercise?.reps.toString() || '');
   const [sets, setSets] = useState(currentExercise?.sets.toString() || '');
+  const [restTime, setRestTime] = useState(currentExercise?.restTime.toString() || '');
 
   const handleSave = () => {
     if (
       !nameOfExercise.trim() ||
       !weight.trim() ||
       !reps.trim() ||
-      !sets.trim()
+      !sets.trim() ||
+      !restTime.trim()
     ) {
       Alert.alert('Validation Error', 'Please fill out all fields.');
       return;
@@ -43,16 +45,21 @@ const EditExerciseScreen = () => {
     const weightNum = parseInt(weight) || 0;
     const repsNum = parseInt(reps) || 0;
     const setsNum = parseInt(sets) || 0;
-    if (weightNum <= 0 || repsNum <= 0 || setsNum <= 0) {
+    const restTimeNum = parseInt(restTime) || 0;
+
+    if (weightNum <= 0 || repsNum <= 0 || setsNum <= 0 || restTimeNum < 0) {
       Alert.alert('Validation Error', 'Weight, reps, and sets must be greater than zero.');
       return;
     }
     if (workout) {
-      workout.exercise[exerciseIndex] = {
-        nameOfExercise,
+      workout.exercises[exerciseIndex] = {
+        id: currentExercise?.id || Date.now().toString(),
+        name: nameOfExercise,
         weight: weightNum,
         reps: repsNum,
         sets: setsNum,
+        restTime: restTimeNum,
+        lastUpdated: new Date()
       };
       updateWorkout(day as string, workout);
       router.back();
@@ -70,7 +77,7 @@ const EditExerciseScreen = () => {
           style: 'destructive', 
           onPress: () => {
             if (workout) {
-              workout.exercise.splice(exerciseIndex, 1);
+              workout.exercises.splice(exerciseIndex, 1);
               updateWorkout(day as string, workout);
               router.back();
             }
@@ -80,7 +87,7 @@ const EditExerciseScreen = () => {
     );
   };
 
-  const isValid = nameOfExercise.trim() && weight.trim() && reps.trim() && sets.trim();
+  const isValid = nameOfExercise.trim() && weight.trim() && reps.trim() && sets.trim() && restTime.trim();
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -125,7 +132,7 @@ const EditExerciseScreen = () => {
                 onChangeText={setReps}
                 placeholder="Enter reps"
                 keyboardType="numeric"
-                width="40%"
+                width="35%"
               />
             </View>
 
@@ -137,6 +144,17 @@ const EditExerciseScreen = () => {
                 placeholder="Enter sets"
                 keyboardType="numeric"
                 width="35%"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Rest Time (minutes)</Text>
+              <BouncyBoxTextInput
+                value={restTime}
+                onChangeText={setRestTime}
+                placeholder="Enter rest time"
+                keyboardType="numeric"
+                width="45%"
               />
             </View>
           </View>

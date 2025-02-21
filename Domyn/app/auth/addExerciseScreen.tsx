@@ -34,7 +34,8 @@ const AddExerciseScreen = () => {
       !nameOfExercise.trim() ||
       !weight.trim() ||
       !reps.trim() ||
-      !sets.trim()
+      !sets.trim() ||
+      !restTime.trim()  // Add rest time validation
     ) {
       Alert.alert('Validation Error', 'Please fill out all fields.');
       return;
@@ -42,7 +43,9 @@ const AddExerciseScreen = () => {
     const weightNum = parseInt(weight) || 0;
     const repsNum = parseInt(reps) || 0;
     const setsNum = parseInt(sets) || 0;
-    if (weightNum <= 0 || repsNum <= 0 || setsNum <= 0) {
+    const restTimeNum = parseInt(restTime) || 0;  // Parse rest time
+  
+    if (weightNum <= 0 || repsNum <= 0 || setsNum <= 0 || restTimeNum < 0) {
       Alert.alert(
         'Validation Error',
         'Weight, reps, and sets must be greater than zero.'
@@ -50,18 +53,25 @@ const AddExerciseScreen = () => {
       return;
     }
     if (workout) {
-      workout.exercise.push({
-        nameOfExercise,
+      workout.exercises.push({
+        id: Date.now().toString(), // Generate a unique ID
+        name: nameOfExercise,
         weight: weightNum,
         reps: repsNum,
         sets: setsNum,
+        restTime: restTimeNum,
+        lastUpdated: new Date()
       });
       updateWorkout(day as string, workout);
       router.back();
     }
   };
 
-  const isValid = nameOfExercise.trim() && weight.trim() && reps.trim() && sets.trim();
+  // Add state for rest time
+  const [restTime, setRestTime] = useState('');
+
+  // Update isValid to include rest time
+  const isValid = nameOfExercise.trim() && weight.trim() && reps.trim() && sets.trim() && restTime.trim();
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -106,7 +116,7 @@ const AddExerciseScreen = () => {
                 onChangeText={setReps}
                 placeholder="Enter reps"
                 keyboardType="numeric"
-                width="40%"
+                width="35%"
               />
             </View>
 
@@ -118,6 +128,17 @@ const AddExerciseScreen = () => {
                 placeholder="Enter sets"
                 keyboardType="numeric"
                 width="35%"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Rest Time (minutes)</Text>
+              <BouncyBoxTextInput
+                value={restTime}
+                onChangeText={setRestTime}
+                placeholder="Enter rest time"
+                keyboardType="numeric"
+                width="45%"
               />
             </View>
           </View>

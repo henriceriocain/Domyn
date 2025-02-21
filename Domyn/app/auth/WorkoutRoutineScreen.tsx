@@ -1,6 +1,5 @@
 // app / auth / WorkoutRoutineScreen.tsx
 
-// app/auth/WorkoutRoutineScreen.tsx
 import React, { useRef } from 'react';
 import { 
   View, 
@@ -32,10 +31,10 @@ export default function WorkoutRoutineScreen() {
     const workout = getWorkout(day);
     return (
       workout &&
-      workout.dayName &&
-      workout.dayName.trim() !== '' &&
-      workout.exercise &&
-      workout.exercise.length > 0
+      workout.customName &&
+      workout.customName.trim() !== '' &&
+      workout.exercises &&
+      workout.exercises.length > 0
     );
   });
 
@@ -61,8 +60,8 @@ export default function WorkoutRoutineScreen() {
               dayDocRef,
               {
                 day,
-                dayName: workout.dayName,
-                exercises: workout.exercise,
+                customName: workout.customName,
+                exercises: workout.exercises,
                 updatedAt: serverTimestamp(),
               },
               { merge: true }
@@ -75,13 +74,14 @@ export default function WorkoutRoutineScreen() {
       console.error("Error saving workout routines:", error);
       alert("Error saving workout routines. Please try again.");
     }
+
   };
 
   const renderDaySection = (day: string, index: number) => {
     const scaleValue = useRef(new Animated.Value(1)).current;
     const workout = getWorkout(day);
-    const customName = workout?.dayName || '';
-    const exercises = workout?.exercise || [];
+    const customName = workout?.customName || '';
+    const exercises = workout?.exercises || [];
 
     let statusText = '';
     if (!customName.trim() && exercises.length === 0) {

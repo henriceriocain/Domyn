@@ -1,5 +1,6 @@
 // app / auth / CustomizeWorkout.tsx
 
+import { useFocusEffect } from '@react-navigation/native';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -20,10 +21,14 @@ import { BouncyBoxTextInput } from '../../components/BouncyBoxTextInput';
 import { BouncyBox } from '../../components/BouncyBox';
 
 interface Exercise {
-  nameOfExercise: string;
+  id: string;
+  name: string;          
   weight: number;
   reps: number;
   sets: number;
+  restTime: number;
+  notes?: string;
+  lastUpdated: Date;
 }
 
 function getFullDayName(abbrev: string): string {
@@ -46,12 +51,14 @@ const ExerciseItem = ({ exercise, onPress }: { exercise: Exercise; onPress: () =
     <BouncyBox containerStyle={styles.exerciseItem} onPress={onPress}>
       <View style={styles.exerciseContent}>
         <Text style={styles.exerciseItemName}>
-          {exercise.nameOfExercise || "Unnamed Exercise"}
+          {exercise.name || "Unnamed Exercise"}
         </Text>
         <Text style={styles.exerciseDetails}>
           {exercise.weight} lbs × {exercise.reps} reps
         </Text>
-        <Text style={styles.exerciseSets}>{exercise.sets} sets</Text>
+        <Text style={styles.exerciseSets}>
+          {exercise.sets} sets ({exercise.restTime} minute{exercise.restTime !== 1 ? 's' : ''})
+        </Text>
       </View>
     </BouncyBox>
   );
@@ -65,8 +72,26 @@ export default function CustomizeWorkout() {
   const router = useRouter();
   const { addWorkout, getWorkout, updateWorkout } = useUserContext() as UserContextProps;
   const existingWorkout = getWorkout(dayString);
-  const [dayName, setDayName] = useState(existingWorkout?.dayName || "");
-  const [exercises, setExercises] = useState<Exercise[]>(existingWorkout?.exercise || []);
+  const [dayName, setDayName] = useState(existingWorkout?.customName || "");
+  const [exercises, setExercises] = useState<Exercise[]>(existingWorkout?.exercises || []);
+
+  // Add this effect to keep exercises in sync with workout
+  useEffect(() => {
+    if (existingWorkout) {
+      setExercises(existingWorkout.exercises);
+    }
+  }, [existingWorkout]);
+
+  // Add this effect to handle updates from other screens
+  useFocusEffect(
+    React.useCallback(() => {
+      const workout = getWorkout(dayString);
+      if (workout) {
+        setExercises(workout.exercises);
+        setDayName(workout.customName);
+      }
+    }, [dayString])
+  );
 
   useEffect(() => {
     if (!existingWorkout) {
@@ -78,7 +103,7 @@ export default function CustomizeWorkout() {
     setDayName(name);
     const workout = getWorkout(dayString);
     if (workout) {
-      workout.dayName = name;
+      workout.setCustomName(name);  
       updateWorkout(dayString, workout);
     }
   };
