@@ -43,8 +43,16 @@ export default function CredentialsScreen() {
     if (!isValid) return;
 
     try {
-      await execute(() => createUserWithEmailAndPassword(auth, email, password));
-      router.push('/auth/PersonalDetailsScreen');
+      const userCredential = await execute(() => 
+        createUserWithEmailAndPassword(auth, email, password)
+      );
+      
+      // Check if we have a user after registration
+      if (userCredential && userCredential.user) {
+        router.push('/auth/PersonalDetailsScreen');
+      } else {
+        Alert.alert('Error', 'Failed to create account. Please try again.');
+      }
     } catch (error: any) {
       console.error(error);
       let errorMessage = "There was a problem creating your account. Please try again.";
