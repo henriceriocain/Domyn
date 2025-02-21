@@ -105,6 +105,18 @@ export default function LoginScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+
+          <View style={styles.signupContainer}>
+            <Text style={styles.signupText}>
+              Don't have an account?{' '}
+              <Text 
+                style={styles.signupLink}
+                onPress={() => router.push('/auth/CredentialsScreen')}
+              >
+                Sign Up {'>'}
+              </Text>
+            </Text>
+          </View>
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -173,5 +185,17 @@ const styles = StyleSheet.create({
   },
   loginButtonTextDisabled: {
     color: '#888',
+  },
+  signupContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 30,
+  },
+  signupText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  signupLink: {
+    color: '#4CD964',
   },
 });

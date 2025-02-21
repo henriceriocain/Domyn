@@ -49,6 +49,11 @@ export const BouncyBoxTextInput: React.FC<BouncyBoxTextInputProps> = ({
     onChangeText(inputValue);
   };
 
+  const handleTextChange = (text: string) => {
+    setInputValue(text);
+    onChangeText(text);
+  };
+
   const containerStyle: ViewStyle = {
     ...styles.inputContainer,
     width,
@@ -76,7 +81,7 @@ export const BouncyBoxTextInput: React.FC<BouncyBoxTextInputProps> = ({
               ref={inputRef}
               style={styles.input}
               value={inputValue}
-              onChangeText={setInputValue}
+              onChangeText={handleTextChange}
               onFocus={handleFocus}
               onBlur={handleBlur}
               placeholder={placeholder}
