@@ -1,4 +1,7 @@
 // app / auth / EditExerciseScreen.tsx
+
+// app/auth/EditExerciseScreen.tsx
+
 import React, { useState } from 'react';
 import { 
   View, 
@@ -16,12 +19,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
 import { BouncyBoxTextInput } from '../../components/BouncyBoxTextInput';
 import type { UserContextProps } from '../../contexts/UserContext';
+import { RoutineWorkout } from '../../models/RoutineWorkout';
+import { Exercise } from '../../models/BaseWorkout';
 
 const EditExerciseScreen = () => {
   const { day, index } = useLocalSearchParams();
   const router = useRouter();
   const { getWorkout, updateWorkout } = useUserContext() as UserContextProps;
-  const workout = getWorkout(day as string);
+  const workout = getWorkout(day as string) as RoutineWorkout;
   const exerciseIndex = parseInt(index as string);
   const currentExercise = workout?.exercises[exerciseIndex];
 
@@ -52,15 +57,22 @@ const EditExerciseScreen = () => {
       return;
     }
     if (workout) {
-      workout.exercises[exerciseIndex] = {
-        id: currentExercise?.id || Date.now().toString(),
+      const updatedExercise: Omit<Exercise, 'id' | 'lastUpdated'> = {
         name: nameOfExercise,
         weight: weightNum,
         reps: repsNum,
         sets: setsNum,
         restTime: restTimeNum,
-        lastUpdated: new Date()
       };
+
+      if (currentExercise?.id) {
+        // If editing existing exercise, use updateExercise
+        workout.updateExercise(currentExercise.id, updatedExercise);
+      } else {
+        // If somehow the exercise doesn't exist, add it as new
+        workout.addExercise(updatedExercise);
+      }
+      
       updateWorkout(day as string, workout);
       router.back();
     }
@@ -76,8 +88,8 @@ const EditExerciseScreen = () => {
           text: 'Delete', 
           style: 'destructive', 
           onPress: () => {
-            if (workout) {
-              workout.exercises.splice(exerciseIndex, 1);
+            if (workout && currentExercise?.id) {
+              workout.removeExercise(currentExercise.id);
               updateWorkout(day as string, workout);
               router.back();
             }

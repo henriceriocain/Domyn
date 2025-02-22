@@ -17,6 +17,7 @@ import { useUserContext } from '../../hooks/useUserContext';
 import { auth, db } from '../../firebase/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useAsyncOperation } from '../../hooks/useAsyncOperation';
+import { RoutineWorkout } from '../../models/RoutineWorkout';
 
 function getFullDayName(day: string): string {
   return day;
@@ -27,16 +28,43 @@ export default function WorkoutRoutineScreen() {
   const { selectedDays, getWorkout } = useUserContext();
   const { execute, loading } = useAsyncOperation();
 
+  // Debug logs to understand the state
+  console.log('=== Debug Info ===');
+  console.log('Selected Days:', selectedDays);
+
+  // Check each day's status in detail
   const allComplete = selectedDays.every(day => {
-    const workout = getWorkout(day);
-    return (
-      workout &&
-      workout.customName &&
-      workout.customName.trim() !== '' &&
-      workout.exercises &&
-      workout.exercises.length > 0
-    );
+    const workout = getWorkout(day) as RoutineWorkout | undefined;
+    
+    // Evaluate each condition separately for clearer debugging
+    const conditions = {
+      exists: !!workout,
+      isScheduled: workout?.isScheduled === true,
+      hasCustomName: !!workout?.customName,
+      customNameNotEmpty: workout?.customName?.trim() !== '',
+      hasExercises: Array.isArray(workout?.exercises),
+      exercisesNotEmpty: (workout?.exercises?.length || 0) > 0
+    };
+
+    // Log the conditions for this day
+    console.log(`${day} conditions:`, conditions);
+
+    // Check final result for this day
+    const isDayComplete = conditions.exists && 
+                         conditions.isScheduled && 
+                         conditions.hasCustomName && 
+                         conditions.customNameNotEmpty && 
+                         conditions.hasExercises && 
+                         conditions.exercisesNotEmpty;
+
+    console.log(`${day} is complete:`, isDayComplete);
+    
+    return isDayComplete;
   });
+
+  // Log the final result
+  console.log('All Complete:', allComplete);
+  console.log('=== End Debug Info ===');
 
   useFocusEffect(React.useCallback(() => {}, []));
 
@@ -52,15 +80,16 @@ export default function WorkoutRoutineScreen() {
     }
     try {
       await execute(async () => {
-        // First save all workout routines
+        // Save all workout routines
         for (const day of selectedDays) {
-          const workout = getWorkout(day);
-          if (workout) {
+          const workout = getWorkout(day) as RoutineWorkout;
+          if (workout && workout.isScheduled) {  // Check isScheduled flag
             const dayDocRef = doc(db, "users", currentUser.uid, "workoutRoutine", day);
             await setDoc(
               dayDocRef,
               {
                 day,
+                isScheduled: true,
                 customName: workout.customName,
                 exercises: workout.exercises,
                 updatedAt: serverTimestamp(),
@@ -69,8 +98,8 @@ export default function WorkoutRoutineScreen() {
             );
           }
         }
-
-        // Then mark registration as complete in main user document
+  
+        // Mark registration as complete
         const userDocRef = doc(db, "users", currentUser.uid);
         await setDoc(
           userDocRef,

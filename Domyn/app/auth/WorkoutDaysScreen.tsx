@@ -29,7 +29,7 @@ type Days = {
 
 export default function WorkoutDaysScreen() {
   const router = useRouter();
-  const { setSelectedDays, addWorkout } = useUserContext();
+  const { setSelectedDays, addWorkout, setWorkouts } = useUserContext();  // Add setWorkouts here
 
   const [days, setDays] = useState<Days>({
     Monday: false,
@@ -58,21 +58,32 @@ export default function WorkoutDaysScreen() {
       }
       try {
         await execute(async () => {
-          for (const day of selectedDays) {
+          // First clear any existing workouts
+          setWorkouts({});  // Add this line to clear existing workouts
+  
+          // Create documents for ALL days with isScheduled flag
+          const allDays = Object.keys(days);
+          for (const day of allDays) {
+            const isScheduled = selectedDays.includes(day);  // Change this to use selectedDays
             const dayDocRef = doc(db, "users", currentUser.uid, "workoutRoutine", day);
             await setDoc(
               dayDocRef,
               {
                 day,
-                workoutName: null,
+                isScheduled,
+                customName: "",
                 exercises: [],
                 createdAt: serverTimestamp(),
               },
               { merge: true }
             );
+  
+            // Only add selected days to context
+            if (isScheduled) {
+              addWorkout(day as keyof Days, true);  // Explicitly set isScheduled to true
+            }
           }
         });
-        selectedDays.forEach((day) => addWorkout(day as keyof Days));
         router.push('./WorkoutRoutineScreen');
       } catch (error) {
         console.error("Error updating workoutRoutine:", error);

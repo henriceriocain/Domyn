@@ -16,20 +16,10 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { UserContextProps } from '../../contexts/UserContext';
-import type Workout from '../../models/Workout';
+import { Exercise } from '../../models/BaseWorkout';  // Updated import
+import { RoutineWorkout } from '../../models/RoutineWorkout';  // Added import
 import { BouncyBoxTextInput } from '../../components/BouncyBoxTextInput';
 import { BouncyBox } from '../../components/BouncyBox';
-
-interface Exercise {
-  id: string;
-  name: string;          
-  weight: number;
-  reps: number;
-  sets: number;
-  restTime: number;
-  notes?: string;
-  lastUpdated: Date;
-}
 
 function getFullDayName(abbrev: string): string {
   const mapping: { [key: string]: string } = {
@@ -71,7 +61,7 @@ export default function CustomizeWorkout() {
   const dayString = Array.isArray(dayParam) ? dayParam[0] : dayParam;
   const router = useRouter();
   const { addWorkout, getWorkout, updateWorkout } = useUserContext() as UserContextProps;
-  const existingWorkout = getWorkout(dayString);
+  const existingWorkout = getWorkout(dayString) as RoutineWorkout | undefined;  // Type cast
   const [dayName, setDayName] = useState(existingWorkout?.customName || "");
   const [exercises, setExercises] = useState<Exercise[]>(existingWorkout?.exercises || []);
 
@@ -85,7 +75,7 @@ export default function CustomizeWorkout() {
   // Add this effect to handle updates from other screens
   useFocusEffect(
     React.useCallback(() => {
-      const workout = getWorkout(dayString);
+      const workout = getWorkout(dayString) as RoutineWorkout | undefined;  // Type cast
       if (workout) {
         setExercises(workout.exercises);
         setDayName(workout.customName);
@@ -95,15 +85,17 @@ export default function CustomizeWorkout() {
 
   useEffect(() => {
     if (!existingWorkout) {
-      addWorkout(dayString);
+      // Create new RoutineWorkout with isScheduled true
+      addWorkout(dayString, true);  // Update this call based on your UserContext
     }
   }, [dayString]);
 
+
   const handleDayNameChange = (name: string) => {
     setDayName(name);
-    const workout = getWorkout(dayString);
+    const workout = getWorkout(dayString) as RoutineWorkout | undefined;  // Type cast
     if (workout) {
-      workout.setCustomName(name);  
+      workout.setCustomName(name);
       updateWorkout(dayString, workout);
     }
   };

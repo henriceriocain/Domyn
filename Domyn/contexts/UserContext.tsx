@@ -23,7 +23,7 @@
 
 import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Workout from '../models/Workout';
+import { RoutineWorkout } from '../models/RoutineWorkout';  // Updated import
 
 export interface UserContextProps {
   name: string;
@@ -35,15 +35,16 @@ export interface UserContextProps {
   weight: string;
   setWeight: (weight: string) => void;
   resetUser: () => void;
-  workouts: { [day: string]: Workout };
-  addWorkout: (day: string) => void;
-  getWorkout: (day: string) => Workout | undefined;
-  updateWorkout: (day: string, workout: Workout) => void;  // Added this line
+  workouts: { [day: string]: RoutineWorkout };
+  setWorkouts: React.Dispatch<React.SetStateAction<{ [day: string]: RoutineWorkout }>>;  // Add this line
+  addWorkout: (day: string, isScheduled: boolean) => void;
+  getWorkout: (day: string) => RoutineWorkout | undefined;  // Updated return type
+  updateWorkout: (day: string, workout: RoutineWorkout) => void;  // Updated type
   selectedDays: string[];
   setSelectedDays: (days: string[]) => void;
-  skippedDays: { [day: string]: string }; // calendar
-  addSkippedDay: (day: string, reason: string) => void; // calendar
-  getSkippedDayReason: (day: string) => string | undefined; // calendar
+  skippedDays: { [day: string]: string };
+  addSkippedDay: (day: string, reason: string) => void;
+  getSkippedDayReason: (day: string) => string | undefined;
 }
 
 export const UserContext = createContext<UserContextProps | undefined>(undefined);
@@ -53,22 +54,14 @@ interface UserProviderProps {
 }
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  // Personal details state
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
   const [weight, setWeight] = useState('');
-  
-  // Workouts state
-  const [workouts, setWorkouts] = useState<{ [day: string]: Workout }>({});
-
-  // Selected days state
+  const [workouts, setWorkouts] = useState<{ [day: string]: RoutineWorkout }>({});  // Updated type
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [skippedDays, setSkippedDays] = useState<{ [day: string]: string }>({});
 
-  // Skipped days state
-  const [skippedDays, setSkippedDays] = useState<{ [day: string]: string }>({}); // calendar
-
-  // Load user data from AsyncStorage
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -85,13 +78,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         if (storedGender) setGender(storedGender);
         if (storedWeight) setWeight(storedWeight);
         if (storedWorkouts) {
-          // Parse the workouts and reconstruct Workout instances
           const parsedWorkouts = JSON.parse(storedWorkouts);
-          const reconstructedWorkouts: { [day: string]: Workout } = {};
+          const reconstructedWorkouts: { [day: string]: RoutineWorkout } = {};
           
           Object.entries(parsedWorkouts).forEach(([day, workoutData]: [string, any]) => {
-            const workout = new Workout(day);
-            // Update using the new Workout class properties
+            const workout = new RoutineWorkout(day, workoutData.isScheduled);
             workout.customName = workoutData.customName || "";
             workout.exercises = workoutData.exercises || [];
             workout.created = new Date(workoutData.created || Date.now());
@@ -114,7 +105,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     loadUserData();
   }, []);
 
-  // Save data to AsyncStorage
   useEffect(() => {
     const saveUserData = async () => {
       try {
@@ -124,7 +114,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         await AsyncStorage.setItem('@user_weight', weight);
         await AsyncStorage.setItem('@workouts', JSON.stringify(workouts));
         await AsyncStorage.setItem('@selected_days', JSON.stringify(selectedDays));
-        await AsyncStorage.setItem('@skipped_days', JSON.stringify(skippedDays)); // calendar
+        await AsyncStorage.setItem('@skipped_days', JSON.stringify(skippedDays));
       } catch (error) {
         console.error('Error saving data to AsyncStorage:', error);
       }
@@ -132,7 +122,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     saveUserData();
   }, [name, age, gender, weight, workouts, selectedDays, skippedDays]);
 
-  // Reset user data
   const resetUser = async () => {
     try {
       setName('');
@@ -141,7 +130,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       setWeight('');
       setWorkouts({});
       setSelectedDays([]);
-      setSkippedDays({}); // calendar
+      setSkippedDays({});
       await AsyncStorage.multiRemove([
         '@user_name',
         '@user_age',
@@ -156,34 +145,33 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   };
 
-  // Add a workout
-  const addWorkout = (day: string) => {
+  const addWorkout = (day: string, isScheduled: boolean = true) => {
     setWorkouts((prev) => {
       if (prev[day]) {
-        console.warn(`Workout for ${day} already exists.`);
-        return prev;
+        // If workout exists, update its isScheduled flag
+        const updatedWorkout = prev[day];
+        updatedWorkout.isScheduled = isScheduled;
+        return { ...prev, [day]: updatedWorkout };
       }
-      return { ...prev, [day]: new Workout(day) };
+      // Create new workout with explicit isScheduled flag
+      const newWorkout = new RoutineWorkout(day, isScheduled);
+      return { ...prev, [day]: newWorkout };
     });
   };
 
-  // Get a workout
-  const getWorkout = (day: string): Workout | undefined => workouts[day];
+  const getWorkout = (day: string): RoutineWorkout | undefined => workouts[day];
 
-  // Update a workout
-  const updateWorkout = (day: string, workout: Workout) => {
+  const updateWorkout = (day: string, workout: RoutineWorkout) => {
     setWorkouts(prev => ({
       ...prev,
       [day]: workout
     }));
   };
 
-  // Add a skipped day
   const addSkippedDay = (day: string, reason: string) => {
     setSkippedDays((prev) => ({ ...prev, [day]: reason }));
   };
 
-  // Get the reason for a skipped day
   const getSkippedDayReason = (day: string): string | undefined => skippedDays[day];
 
   const value = useMemo(
@@ -198,14 +186,15 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       setWeight,
       resetUser,
       workouts,
+      setWorkouts,
       addWorkout,
       getWorkout,
-      updateWorkout,  // Added this line
+      updateWorkout,
       selectedDays,
       setSelectedDays,
-      skippedDays, // calendar
-      addSkippedDay, // calendar
-      getSkippedDayReason, // calendar
+      skippedDays,
+      addSkippedDay,
+      getSkippedDayReason,
     }),
     [name, age, gender, weight, workouts, selectedDays, skippedDays]
   );

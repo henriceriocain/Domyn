@@ -17,17 +17,19 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUserContext } from '../../hooks/useUserContext';
 import { BouncyBoxTextInput } from '../../components/BouncyBoxTextInput';
 import type { UserContextProps } from '../../contexts/UserContext';
+import { RoutineWorkout } from '../../models/RoutineWorkout';  // Add this import
 
 const AddExerciseScreen = () => {
   const { day } = useLocalSearchParams();
   const router = useRouter();
   const { getWorkout, updateWorkout } = useUserContext() as UserContextProps;
-  const workout = getWorkout(day as string);
+  const workout = getWorkout(day as string) as RoutineWorkout;
 
   const [nameOfExercise, setNameOfExercise] = useState('');
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
   const [sets, setSets] = useState('');
+  const [restTime, setRestTime] = useState('');  // Add this state
 
   const handleSave = () => {
     if (
@@ -35,7 +37,7 @@ const AddExerciseScreen = () => {
       !weight.trim() ||
       !reps.trim() ||
       !sets.trim() ||
-      !restTime.trim()  // Add rest time validation
+      !restTime.trim()
     ) {
       Alert.alert('Validation Error', 'Please fill out all fields.');
       return;
@@ -43,8 +45,8 @@ const AddExerciseScreen = () => {
     const weightNum = parseInt(weight) || 0;
     const repsNum = parseInt(reps) || 0;
     const setsNum = parseInt(sets) || 0;
-    const restTimeNum = parseInt(restTime) || 0;  // Parse rest time
-  
+    const restTimeNum = parseInt(restTime) || 0;
+
     if (weightNum <= 0 || repsNum <= 0 || setsNum <= 0 || restTimeNum < 0) {
       Alert.alert(
         'Validation Error',
@@ -53,25 +55,20 @@ const AddExerciseScreen = () => {
       return;
     }
     if (workout) {
-      workout.exercises.push({
-        id: Date.now().toString(), // Generate a unique ID
+      workout.addExercise({
         name: nameOfExercise,
         weight: weightNum,
         reps: repsNum,
         sets: setsNum,
-        restTime: restTimeNum,
-        lastUpdated: new Date()
+        restTime: restTimeNum
       });
       updateWorkout(day as string, workout);
       router.back();
     }
   };
 
-  // Add state for rest time
-  const [restTime, setRestTime] = useState('');
-
-  // Update isValid to include rest time
   const isValid = nameOfExercise.trim() && weight.trim() && reps.trim() && sets.trim() && restTime.trim();
+
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -116,7 +113,7 @@ const AddExerciseScreen = () => {
                 onChangeText={setReps}
                 placeholder="Enter reps"
                 keyboardType="numeric"
-                width="35%"
+                width="40%"
               />
             </View>
 
@@ -141,6 +138,7 @@ const AddExerciseScreen = () => {
                 width="45%"
               />
             </View>
+            
           </View>
 
           <View style={styles.nextButtonContainer}>
@@ -166,6 +164,7 @@ const AddExerciseScreen = () => {
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
+
 };
 
 export default AddExerciseScreen;
