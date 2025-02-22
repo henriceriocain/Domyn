@@ -52,6 +52,7 @@ export default function WorkoutRoutineScreen() {
     }
     try {
       await execute(async () => {
+        // First save all workout routines
         for (const day of selectedDays) {
           const workout = getWorkout(day);
           if (workout) {
@@ -68,13 +69,24 @@ export default function WorkoutRoutineScreen() {
             );
           }
         }
+
+        // Then mark registration as complete in main user document
+        const userDocRef = doc(db, "users", currentUser.uid);
+        await setDoc(
+          userDocRef,
+          {
+            isRegistered: true,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
       });
+      
       router.push("/auth/AllSetUpScreen");
     } catch (error) {
       console.error("Error saving workout routines:", error);
       alert("Error saving workout routines. Please try again.");
     }
-
   };
 
   const renderDaySection = (day: string, index: number) => {

@@ -16,8 +16,9 @@ import {
 import { useRouter } from 'expo-router';
 import { BouncyBoxTextInput } from '../../components/BouncyBoxTextInput';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../firebase/firebaseConfig';
+import { auth, db } from '../../firebase/firebaseConfig';
 import { useAsyncOperation } from '../../hooks/useAsyncOperation';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -32,8 +33,18 @@ export default function LoginScreen() {
     }
 
     try {
-      await execute(() => signInWithEmailAndPassword(auth, email, password));
-      router.replace('/home/centralHome');
+      // First execute login
+      const userCredential = await execute(() => signInWithEmailAndPassword(auth, email, password));
+      
+      // Then check registration status
+      const userDoc = await execute(() => getDoc(doc(db, "users", userCredential.user.uid)));
+      const isRegistered = userDoc.exists() && userDoc.data()?.isRegistered === true;
+
+      if (isRegistered) {
+        router.replace('/home/centralHome');
+      } else {
+        router.replace('/auth/PersonalDetailsScreen');
+      }
     } catch (error: any) {
       let errorMessage = 'Failed to login. Please try again.';
       if (error.code === 'auth/invalid-email') {
