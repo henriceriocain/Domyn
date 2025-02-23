@@ -4,19 +4,22 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { auth, db } from '../firebase/firebaseConfig';
 import { collection, query, getDocs, where } from 'firebase/firestore';
+import { useUserContext } from '../hooks/useUserContext';
+import { RoutineWorkout } from '../models/RoutineWorkout';
 
 interface DayStatus {
   date: string;
   dayLetter: string;
   dayNumber: number;
+  dayName: string;  // Full day name
   status: 'completed' | 'skipped' | 'missed' | 'scheduled' | 'none' | 'past';
   isToday: boolean;
-  hasWorkout: boolean;
+  isScheduled: boolean;  // Changed from hasWorkout to match our model
 }
 
 export const WeekView = () => {
   const [weekDays, setWeekDays] = useState<DayStatus[]>([]);
-  const [isFirstTime, setIsFirstTime] = useState(true);
+  const { workouts } = useUserContext();  // Get workouts from context
 
   useEffect(() => {
     const fetchWeekStatus = async () => {
@@ -24,7 +27,7 @@ export const WeekView = () => {
 
       // Get current week dates
       const today = new Date();
-      today.setHours(0, 0, 0, 0);  // Normalize today's date
+      today.setHours(0, 0, 0, 0);
       const monday = new Date(today);
       monday.setDate(today.getDate() - today.getDay() + 1); // Start with Monday
 
@@ -38,69 +41,51 @@ export const WeekView = () => {
         const isPast = date < today;
         
         const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+        const workout = workouts[dayName] as RoutineWorkout | undefined;
         
+        // Determine status based on workout data
+        let status: DayStatus['status'] = 'none';
+        if (workout?.isScheduled) {
+          if (isPast && !isToday) {
+            status = 'missed';  // Past scheduled workouts are marked as missed
+          } else {
+            status = 'scheduled';
+          }
+        }
+
         days.push({
           date: date.toISOString().split('T')[0],
           dayLetter: date.toLocaleDateString('en-US', { weekday: 'short' })[0],
           dayNumber: date.getDate(),
-          status: 'none',
+          dayName,
+          status,
           isToday,
-          hasWorkout: false
+          isScheduled: workout?.isScheduled || false
         });
       }
 
       try {
-        // Fetch workout routine for scheduled days
-        const routineRef = collection(db, 'users', auth.currentUser.uid, 'workoutRoutine');
-        const routineSnap = await getDocs(routineRef);
-        const workoutDays = new Set(routineSnap.docs.map(doc => doc.id));
-
-        // Update status for scheduled days
-        days.forEach(day => {
-          const dayName = new Date(day.date).toLocaleDateString('en-US', { weekday: 'long' });
-          day.hasWorkout = workoutDays.has(dayName);
-          
-          const isPast = new Date(day.date) < today;
-          const isFuture = new Date(day.date) > today;
-
-          if (isFirstTime) {
-            if (isPast && !day.isToday) {
-              day.status = 'past';
-            } else if (day.hasWorkout) {
-              day.status = 'scheduled';
-            }
-          } else {
-            if (isFuture && day.hasWorkout) {
-              day.status = 'scheduled';
-            } else if (isPast && day.hasWorkout) {
-              day.status = 'missed';
-            }
+        // Fetch completed workouts for the week
+        const logsRef = collection(db, 'users', auth.currentUser.uid, 'workoutLogs');
+        const weekStart = days[0].date;
+        const weekEnd = days[6].date;
+        
+        const logsQuery = query(
+          logsRef,
+          where('date', '>=', weekStart),
+          where('date', '<=', weekEnd)
+        );
+        
+        const logsSnap = await getDocs(logsQuery);
+        
+        // Update status for completed/skipped workouts
+        logsSnap.forEach(doc => {
+          const logData = doc.data();
+          const dayIndex = days.findIndex(day => day.date === logData.date);
+          if (dayIndex !== -1) {
+            days[dayIndex].status = logData.status as DayStatus['status'];
           }
         });
-
-        // If not first time, fetch completed workouts for the week
-        if (!isFirstTime) {
-          const logsRef = collection(db, 'users', auth.currentUser.uid, 'workoutLogs');
-          const weekStart = days[0].date;
-          const weekEnd = days[6].date;
-          
-          const logsQuery = query(
-            logsRef,
-            where('date', '>=', weekStart),
-            where('date', '<=', weekEnd)
-          );
-          
-          const logsSnap = await getDocs(logsQuery);
-          
-          // Update status for completed/skipped/missed workouts
-          logsSnap.forEach(doc => {
-            const logData = doc.data();
-            const dayIndex = days.findIndex(day => day.date === logData.date);
-            if (dayIndex !== -1) {
-              days[dayIndex].status = logData.status;
-            }
-          });
-        }
 
         setWeekDays(days);
       } catch (error) {
@@ -109,22 +94,20 @@ export const WeekView = () => {
     };
 
     fetchWeekStatus();
-  }, [isFirstTime]);
+  }, [workouts]);  // Update when workouts change
 
   const getStatusColor = (day: DayStatus) => {
-    // If this day doesn't have a workout scheduled, always return transparent
-    if (!day.hasWorkout) {
+    if (!day.isScheduled) {
       return 'transparent';
     }
 
-    // For days with workouts, determine the color based on status
     switch (day.status) {
       case 'completed': return '#2E7D32';  // Green
       case 'skipped': return '#F9A825';    // Yellow
       case 'missed': return '#B71C1C';     // Red
       case 'scheduled': return '#424242';   // Dark Gray
-      case 'past': return '#1a1a1a';       // Background (scratched out)
-      case 'none': return '#424242';       // Gray for scheduled workouts
+      case 'past': return '#1a1a1a';       // Background
+      case 'none': return '#424242';       // Gray
       default: return 'transparent';
     }
   };
@@ -143,7 +126,7 @@ export const WeekView = () => {
               ]}
             >
               <Text style={styles.dayNumber}>{day.dayNumber}</Text>
-              {day.status === 'past' && !day.isToday && (
+              {day.status === 'missed' && (
                 <View style={styles.scratchLine} />
               )}
             </View>
